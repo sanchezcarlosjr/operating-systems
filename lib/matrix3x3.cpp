@@ -7,12 +7,12 @@ int main(int argv, const char* argc[]) {
 		return 1;
 	}
 	float sums[6] = {0, 0, 0, 0, 0, 0};
-	for(int i=1; i<4; i++) {
+	for(int i=0; i<9; i += 3) {
 		for(int j=0; j<3; j++) {
-			float cell = atof(argc[i+j]);
+			float cell = atof(argc[i+j+1]);
 			std::cout << cell << " ";
-			sums[i-1] += cell;
-			sums[j+2] += cell;
+			sums[i/3] += cell;
+			sums[j+3] += cell;
 		}
 		std::cout << std::endl;
 	}
