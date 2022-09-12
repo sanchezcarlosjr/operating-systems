@@ -6,12 +6,15 @@
 #include <unistd.h>
 #include <signal.h>
 
-struct Message {
-	long mesg_type;
-	char mesg_text[100];
-} message;
 
 #define MESSAGE_EOF "fin de la transmision\n"
+#define MAX_MESSAGE_STR 100
+
+struct Message {
+	long mesg_type;
+	char mesg_text[MAX_MESSAGE_STR];
+} message;
+
 
 int main(int argc, char* argv[]) {
 	key_t key = ftok("progfile", 65);
@@ -30,7 +33,7 @@ int main(int argc, char* argv[]) {
 		message.mesg_type = atoi(argv[1]);
 		do {
 			printf(">");
-			fgets(message.mesg_text, 100, stdin);
+			fgets(message.mesg_text, MAX_MESSAGE_STR, stdin);
 			msgsnd(msgid, &message, sizeof(message), 0);
 		} while(strcmp(message.mesg_text,  MESSAGE_EOF));
 		kill(c_pid, SIGKILL);
