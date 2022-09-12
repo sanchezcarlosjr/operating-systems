@@ -12,8 +12,8 @@ int main()
     scanf("%d",&n);
     for(i=0; i<n; i++)
     {
-        printf("Enter the ProcessName, Arrival Time& Burst Time:");
-/* Ingresar los valores separados por comas: P0,5,6 */
+        printf("Enter the ProcessName, Arrival Time, Burst Time:");
+	/* Input example: P0 5 6 3 */
         scanf("%s %d %d", &pn[i], &arr[i], &bur[i]);
     }
     for(i=0; i<n; i++)
