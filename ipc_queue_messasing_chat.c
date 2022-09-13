@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
 	int msgid = msgget(key, 0666 | IPC_CREAT);
 	pid_t c_pid = -1;
 	if ((c_pid = fork()) == 0) {
-		msgrcv(msgid, &message, sizeof(message), atoi(argv[2]), IPC_NOWAIT);
+		// Child consumer.
 		do {
 			msgrcv(msgid, &message, sizeof(message), atoi(argv[2]), 0);
 			printf("\n%s:%s>\n",  argv[2], message.mesg_text);
@@ -30,6 +30,7 @@ int main(int argc, char* argv[]) {
 		kill(getppid(), SIGKILL);
 		exit(0);
 	} else {
+		// Parent producer.
 		message.mesg_type = atoi(argv[1]);
 		do {
 			printf(">");
