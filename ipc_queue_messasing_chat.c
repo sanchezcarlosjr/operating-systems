@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
 		// Child consumer.
 		do {
 			msgrcv(msgid, &message, sizeof(message), atoi(argv[2]), 0);
-			printf("\r\r%s:%s\n",  argv[2], message.text);
+			printf("\r%s: %s\n",  argv[2], message.text);
 			printf(MESSAGE_ME);
 			fflush(stdout);
 		} while(strcmp(message.text, MESSAGE_EOF));
