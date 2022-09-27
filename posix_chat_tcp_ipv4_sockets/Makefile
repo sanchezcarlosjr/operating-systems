@@ -1,5 +1,5 @@
 chat:
-	gcc -O3 chat.c -o chat.out
+	g++ -O3 chat.cpp -o chat.out
 
 
 .PHONY : clean
