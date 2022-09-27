@@ -65,11 +65,13 @@ class ActiveSocket: public State {
 public:
 	State* transite(Socket* socket) {
 		char buffer[BUFFER_SIZE];
-		if (recv(socket->peerDescriptor, buffer, BUFFER_SIZE, 0) < 0) {
+		ssize_t numBytes = 0;
+		if ((numBytes = recv(socket->peerDescriptor, buffer, BUFFER_SIZE-1, 0)) < 0) {
 			printf("\r[ERROR] Reception failed.\n");
 			exit(EXIT_FAILURE);
 		}
-		printf("\rPeer: %s\n", buffer);
+		buffer[numBytes] = '\0';
+		printf("\r[PEER] %s:%d sent %s\n", socket->peerName, ntohs(socket->peerAddress.sin_port), buffer);
 		return new Done();
 	}
 
@@ -82,11 +84,15 @@ class PassiveSocket: public State {
 public:
 	State* transite(Socket* socket) {
 		char* message;
-		printf("\r>\n");
+		printf("\r>");
 		scanf("%ms", &message);
 		ssize_t numBytes = send(socket->socketDescriptor, message, strlen(message), 0);
 		if (numBytes < 0) {
 			fputs("\r[ERROR] send failed\n", stderr);
+			exit(EXIT_FAILURE);
+		}
+		if (numBytes != strlen(message)) {
+			fputs("\r[ERROR] send unexpected number of bytes.\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 		free(message);
