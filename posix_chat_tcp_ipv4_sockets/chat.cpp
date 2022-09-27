@@ -61,36 +61,22 @@ class Done: public State {
 	}
 };
 
-class ActiveSocket: public State {
+class KindSocket: public State {
 public:
 	State* transite(Socket* socket) {
-		char buffer[BUFFER_SIZE];
-		while(true) {
-			ssize_t numBytes = 0;
-			if ((numBytes = recv(socket->peerDescriptor, buffer, BUFFER_SIZE-1, 0)) < 0) {
-				printf("\r[ERROR] Reception failed.\n");
-				exit(EXIT_FAILURE);
-			}
-			buffer[numBytes] = '\0';
-			printf("\r[PEER] %s:%d sent %s\n", socket->peerName, ntohs(socket->peerAddress.sin_port), buffer);
-		}
+		std::thread t(&KindSocket::receiveMessages, this, socket);
+		sendMessages(socket);
 		return new Done();
 	}
-
-	void receive(Socket* socket) {
-	
-	}
-};
-
-class PassiveSocket: public State {
-public:
-	State* transite(Socket* socket) {
+	virtual int to(Socket* socket) = 0;
+	virtual int from(Socket* socket) = 0;
+	void sendMessages(Socket* socket) {
 		char* message;
 		while(true) {
 			printf("\r\r>");
 			scanf(" %m[^\n]s", &message);
 			size_t messageLength = strlen(message);
-			ssize_t numBytes = send(socket->socketDescriptor, message, messageLength, 0);
+			ssize_t numBytes = send(to(socket), message, messageLength, 0);
 			if (numBytes < 0) {
 				fputs("\r[ERROR] send failed\n", stderr);
 				exit(EXIT_FAILURE);
@@ -101,9 +87,38 @@ public:
 			}
 			free(message);
 		}
-		return new Done();
 	}
-	void receive(Socket* socket) {
+	void receiveMessages(Socket* socket) {
+		char buffer[BUFFER_SIZE];
+		while(true) {
+			ssize_t numBytes = 0;
+			if ((numBytes = recv(from(socket), buffer, BUFFER_SIZE-1, 0)) < 0) {
+				printf("\r[ERROR] Reception failed.\n");
+				exit(EXIT_FAILURE);
+			}
+			buffer[numBytes] = '\0';
+			printf("\r[PEER] %s:%d sent %s\n", socket->peerName, ntohs(socket->peerAddress.sin_port), buffer);
+		}
+	}	
+};
+
+class ActiveSocket: public KindSocket {
+public:
+	int to(Socket* socket) {
+		return socket->peerDescriptor;
+	}
+	int from(Socket* socket) {
+		return socket->peerDescriptor;
+	}
+};
+
+class PassiveSocket: public State {
+public:
+	int to(Socket* socket) {
+		return socket->socketDescriptor;
+	}
+	int from(Socket* socket) {
+		return socket->socketDescriptor;
 	}
 };
 
@@ -152,10 +167,12 @@ class BindingSocket: public State {
 class ConnectionSocket: public State {
 	State* transite(Socket* s) {
 		if (inet_pton(s->addressFamily, s->peerAddressIPv4, &s->peerAddress.sin_addr.s_addr) <= 0) {
+			printf("\rConnection failed. We are a server.\n");
 			return new BindingSocket();
 		}
 		printf("\rConnecting to server...\n");
 		if (connect(s->socketDescriptor, (struct sockaddr *) &s->peerAddress, sizeof(s->peerAddress)) < 0) {
+			printf("\rConnection failed. We are a server.\n");
 			return new BindingSocket();
 		}
 		return new PassiveSocket();
