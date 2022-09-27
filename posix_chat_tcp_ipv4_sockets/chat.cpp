@@ -51,8 +51,6 @@ public:
 class Done: public State {
         State* transite(Socket* s) {
 		printf("\rClosing communication...\n");
-		close(s->peerDescriptor);
-		close(s->socketDescriptor);
 		printf("\rServer closes comunnication.\n");
 		return this;
 	}
@@ -98,6 +96,7 @@ public:
 			}
 			buffer[numBytes] = '\0';
 			printf("\r[PEER] %s:%d sent %s\n", socket->peerName, ntohs(socket->peerAddress.sin_port), buffer);
+			fflush(stdout);
 		}
 	}	
 };
