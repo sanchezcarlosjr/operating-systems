@@ -63,7 +63,7 @@ class Done: public State {
 
 class KindSocket: public State {
 public:
-	State* transite(Socket* socket) {
+	virtual State* transite(Socket* socket) {
 		std::thread t(&KindSocket::receiveMessages, this, socket);
 		sendMessages(socket);
 		return new Done();
@@ -104,6 +104,10 @@ public:
 
 class ActiveSocket: public KindSocket {
 public:
+	State* transite(Socket* socket) {
+		sendMessages(socket);
+		return new Done();
+	}
 	int to(Socket* socket) {
 		return socket->peerDescriptor;
 	}
@@ -112,8 +116,12 @@ public:
 	}
 };
 
-class PassiveSocket: public State {
+class PassiveSocket: public KindSocket {
 public:
+	State* transite(Socket* socket) {
+		receiveMessages(socket);
+		return new Done();
+	}
 	int to(Socket* socket) {
 		return socket->socketDescriptor;
 	}
