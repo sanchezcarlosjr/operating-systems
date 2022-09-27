@@ -81,7 +81,7 @@ public:
 class PassiveSocket: public State {
 public:
 	State* transite(Socket* socket) {
-		const char message[10];
+		char message[10];
 		printf("\r>\n");
 		scanf(" %[^\n]s", message);
 		ssize_t numBytes = send(socket->socketDescriptor, message, strlen(message), 0);
