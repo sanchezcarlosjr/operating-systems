@@ -8,7 +8,7 @@
 #include <arpa/inet.h>
 
 int main(int argc, char *argv[]) {
-  if (argc == 3 || argc == 4) {
+  if (argc != 3 || argc != 4) {
 	  printf("\r./client.out <SERVER ADDRESS IPv4> <ECHO WORD> [<SERVER PORT>]\n");
 	  return EXIT_FAILURE;
   }
