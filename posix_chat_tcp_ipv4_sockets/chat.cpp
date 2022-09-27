@@ -66,25 +66,6 @@ public:
 	State* transite(Socket* socket) {
 		std::thread thread(&ActiveSocket::receive, this, socket);
 		while(true) {
-			char message[BUFFER_SIZE];
-			printf("\n>", message);
-			scanf("% [^\n]s", message);
-			size_t messageLength = strlen(message);
-			ssize_t numBytes = send(socket->peerDescriptor, message, messageLength, 0);
-			if (numBytes < 0) {
-				fputs("\r[ERROR] send failed\n", stderr);
-				exit(EXIT_FAILURE);
-			}
-			if (numBytes != messageLength) {
-				fputs("\r[ERROR] send un expected number of bytes\n", stderr);
-				exit(EXIT_FAILURE);
-			}
-		}
-		return new Done();
-	}
-
-	void receive(Socket* socket) {
-		while(true) {
 			char buffer[BUFFER_SIZE];
 			if (recv(socket->peerDescriptor, buffer, BUFFER_SIZE, 0) < 0) {
 				printf("\r[ERROR] Reception failed.\n");
@@ -93,6 +74,11 @@ public:
 			printf("\rPeer: %s\n", buffer);
 			sleep(2);
 		}
+		return new Done();
+	}
+
+	void receive(Socket* socket) {
+	
 	}
 };
 
@@ -100,8 +86,8 @@ class PassiveSocket: public State {
 public:
 	State* transite(Socket* socket) {
 		std::thread thread(&PassiveSocket::receive, this, socket);
+		char message[BUFFER_SIZE];
 		while(true) {
-			char message[BUFFER_SIZE];
 			printf("\n>", message);
 			scanf("% [^\n]s", message);
 			size_t messageLength = strlen(message);
@@ -118,15 +104,6 @@ public:
 		return new Done();
 	}
 	void receive(Socket* socket) {
-		while(true) {
-		        char buffer[BUFFER_SIZE];
-			if (recv(socket->socketDescriptor, buffer, BUFFER_SIZE, 0) < 0) {
-				printf("\r[ERROR] Reception failed.\n");
-				exit(EXIT_FAILURE);
-			}
-			printf("\rPeer: %s\n", buffer);
-			sleep(2);
-		}
 	}
 };
 
