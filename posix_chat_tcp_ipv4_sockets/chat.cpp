@@ -81,8 +81,9 @@ public:
 class PassiveSocket: public State {
 public:
 	State* transite(Socket* socket) {
-		const char* message = "My morning are x.";
-		printf("\n>");
+		const char* message;
+		printf("\r>\n");
+		scanf(" %[^\n]s", message);
 		ssize_t numBytes = send(socket->socketDescriptor, message, strlen(message), 0);
 		if (numBytes < 0) {
 			fputs("\r[ERROR] send failed\n", stderr);
