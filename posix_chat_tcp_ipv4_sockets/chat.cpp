@@ -71,8 +71,9 @@ public:
 	void sendMessages(Socket* socket) {
 		char* message;
 		while(true) {
-			printf("\r\r>");
+			printf("\n\r>");
 			scanf(" %m[^\n]s", &message);
+			fflush(stdout);
 			size_t messageLength = strlen(message);
 			ssize_t numBytes = send(to(socket), message, messageLength, 0);
 			if (numBytes < 0) {
