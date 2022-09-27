@@ -81,7 +81,7 @@ public:
 class PassiveSocket: public State {
 public:
 	State* transite(Socket* socket) {
-		char message = "My morning are x.";
+		const char* message = "My morning are x.";
 		printf("\n>");
 		ssize_t numBytes = send(socket->socketDescriptor, message, strlen(message), 0);
 		if (numBytes < 0) {
