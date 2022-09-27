@@ -37,10 +37,10 @@ class Socket {
 
 class State {
 public:
-	State* transite(Socket* s)  {
+	virtual State* transite(Socket* s)  {
 		return 0;
 	}
-	bool isAcceptState() {
+	virtual bool isAcceptState() {
 		return false;
 	}
 };
@@ -150,6 +150,7 @@ class ConnectionSocket: public State {
 class SocketCreation: public State {
 	public:
 		State* transite(Socket* s) {
+		        printf("\rCreating socket...\n");
 			if ((s->socketDescriptor = socket(s->addressFamily, SOCK_STREAM, IPPROTO_TCP)) < 0) {
 				fputs("\r[ERROR] socket failed\n", stderr);
 				exit(EXIT_FAILURE);
@@ -167,9 +168,10 @@ private:
 		State* currentState = new SocketCreation();
 		Socket* socket;
 public:
-		Machine(Socket* socket): socket(socket) {}
+		Machine(Socket* socket): socket(socket) {
+		}
 		Socket* execute() {
-			while (!(currentState = currentState->transite(socket))->isAcceptState());
+			while(!(currentState = currentState->transite(socket))->isAcceptState());
 			return socket;
 		}
 };
