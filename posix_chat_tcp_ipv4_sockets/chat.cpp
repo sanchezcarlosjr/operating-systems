@@ -62,6 +62,7 @@ class Done: public State {
 class KindSocket: public State {
 public:
 	virtual State* transite(Socket* socket) {
+		printf("\rYou have connected succesful to %s:%d\n", socket->peerName, ntohs(socket->peerAddress.sin_port));
 		std::thread t(&KindSocket::receiveMessages, this, socket);
 		sendMessages(socket);
 		return new Done();
@@ -71,7 +72,7 @@ public:
 	void sendMessages(Socket* socket) {
 		char* message;
 		while(true) {
-			printf("\n\r>");
+			printf("\r\r\n>");
 			scanf(" %m[^\n]s", &message);
 			fflush(stdout);
 			size_t messageLength = strlen(message);
@@ -96,7 +97,7 @@ public:
 				exit(EXIT_FAILURE);
 			}
 			buffer[numBytes] = '\0';
-			printf("\r[PEER] %s:%d sent %s\n", socket->peerName, ntohs(socket->peerAddress.sin_port), buffer);
+			printf("\r\r[PEER] %s:%d sent %s\n", socket->peerName, ntohs(socket->peerAddress.sin_port), buffer);
 			fflush(stdout);
 		}
 	}	
