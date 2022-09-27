@@ -86,7 +86,7 @@ public:
 	void receive(Socket* socket) {
 		while(true) {
 			char buffer[BUFFER_SIZE];
-			if (recv(socket->socketDescriptor, buffer, BUFFER_SIZE, 0) < 0) {
+			if (recv(socket->peerDescriptor, buffer, BUFFER_SIZE, 0) < 0) {
 				printf("\r[ERROR] Reception failed.\n");
 				exit(EXIT_FAILURE);
 			}
