@@ -72,7 +72,7 @@ public:
 	void sendMessages(Socket* socket) {
 		char* message;
 		while(true) {
-			printf("\r>");
+			printf("\r");
 			scanf(" %m[^\n]s", &message);
 			fflush(stdout);
 			size_t messageLength = strlen(message);
