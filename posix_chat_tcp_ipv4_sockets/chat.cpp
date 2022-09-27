@@ -71,9 +71,8 @@ public:
 	virtual int from(Socket* socket) = 0;
 	void sendMessages(Socket* socket) {
 		char* message;
-		printf("\r>");
 		while(true) {
-			printf("\r");
+			printf("\r>");
 			scanf(" %m[^\n]s", &message);
 			fflush(stdout);
 			size_t messageLength = strlen(message);
