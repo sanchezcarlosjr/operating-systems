@@ -87,19 +87,21 @@ class PassiveSocket: public State {
 public:
 	State* transite(Socket* socket) {
 		char* message;
-		printf("\r\r>");
-		scanf("%ms", &message);
-		size_t messageLength = strlen(message);
-		ssize_t numBytes = send(socket->socketDescriptor, message, messageLength, 0);
-		if (numBytes < 0) {
-			fputs("\r[ERROR] send failed\n", stderr);
-			exit(EXIT_FAILURE);
+		while(true) {
+			printf("\r\r>");
+			scanf("%ms", &message);
+			size_t messageLength = strlen(message);
+			ssize_t numBytes = send(socket->socketDescriptor, message, messageLength, 0);
+			if (numBytes < 0) {
+				fputs("\r[ERROR] send failed\n", stderr);
+				exit(EXIT_FAILURE);
+			}
+			if (numBytes != messageLength) {
+				fputs("\r[ERROR] send unexpected number of bytes.\n", stderr);
+				exit(EXIT_FAILURE);
+			}
+			free(message);
 		}
-		if (numBytes != messageLength) {
-			fputs("\r[ERROR] send unexpected number of bytes.\n", stderr);
-			exit(EXIT_FAILURE);
-		}
-		free(message);
 		return new Done();
 	}
 	void receive(Socket* socket) {
