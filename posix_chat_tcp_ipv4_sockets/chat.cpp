@@ -63,8 +63,12 @@ class KindSocket: public State {
 public:
 	virtual State* transite(Socket* socket) {
 		printf("\rYou have connected succesful to %s:%d\n", socket->peerName, ntohs(socket->peerAddress.sin_port));
-		std::thread t(&KindSocket::receiveMessages, this, socket);
-		sendMessages(socket);
+		if (fork() == 0) {
+			receiveMessages(socket);
+		} else {
+			sendMessages(socket);
+		}
+		// std::thread t(&KindSocket::receiveMessages, this, socket);
 		return new Done();
 	}
 	virtual int to(Socket* socket) = 0;
