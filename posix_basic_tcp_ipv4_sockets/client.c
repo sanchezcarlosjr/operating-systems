@@ -9,17 +9,17 @@
 
 int main(int argc, char *argv[]) {
   if (argc == 3 || argc == 4) {
-	  printf("\n./client.out <SERVER ADDRESS IPv4> <ECHO WORD> [<SERVER PORT>]");
+	  printf("\r./client.out <SERVER ADDRESS IPv4> <ECHO WORD> [<SERVER PORT>]\n");
 	  return EXIT_FAILURE;
   }
   char *serverIPv4 = argv[1];
   char *message = argv[2];
   in_port_t serverPort = (argc == 4) ? atoi(argv[3]) : 7;
 
-  fputs("\nCreating socket...", stdin);
+  printf("\rCreating socket...\n");
   int socketDescriptor = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (socketDescriptor < 0) {
-          fputs("\n[ERROR] socket failed", stderr);
+          fputs("\r[ERROR] socket failed\n", stderr);
 	  return EXIT_FAILURE;
   }
 
@@ -31,29 +31,29 @@ int main(int argc, char *argv[]) {
 	  .sin_port=htons(serverPort)
   };
   if (inet_pton(serverAddress.sin_family, serverIPv4, &serverAddress.sin_addr.s_addr) <= 0) {
-	  fputs("\n[ERROR] Unable server.", stderr);
+	  fputs("\r[ERROR] Unable server.\n", stderr);
 	  return EXIT_FAILURE;
   }
 
-  fputs("\nConnecting to server...", stdin);
+  printf("\rConnecting to server...\n");
   if (connect(socketDescriptor, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0) {
-    fputs("\n[ERROR] The connection failed.", stderr);
+    fputs("\r[ERROR] The connection failed.\n", stderr);
     return EXIT_FAILURE;
   }
 
-  fputs("\nSending message to server...", stdin);
+  printf("\rSending message to server...\n");
   size_t messageLength = strlen(message);
   ssize_t numBytes = send(socketDescriptor, message, messageLength, 0);
   if (numBytes < 0) {
-     fputs("\n[ERROR] send failed", stderr);
+     fputs("\r[ERROR] send failed\n", stderr);
      return EXIT_FAILURE;
   }
   if (numBytes != messageLength) {
-     fputs("\n[ERROR] send un expected number of bytes", stderr);
+     fputs("\r[ERROR] send un expected number of bytes\n", stderr);
      return EXIT_FAILURE;
   }
 
-  fputs("\nClosing connection...", stdin);
+  printf("\rClosing connection...\n");
   close(socketDescriptor);
   return EXIT_SUCCESS;
 }

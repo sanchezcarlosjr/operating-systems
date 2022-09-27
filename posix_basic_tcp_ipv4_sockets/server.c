@@ -12,12 +12,12 @@
 
 int main(int argc, char *argv[]) {
 	if (argc != 2) {
-		printf("\nserver.out <Server Port>");
-		return -1;
+		printf("\rserver.out <Server Port>\n");
+		return 0;
 	}
 	in_port_t serverPort = atoi(argv[1]);
 
-	printf("\nStarting socket...\n\nListening on port %d", serverPort);
+	printf("\rStarting socket...\n");
 	struct sockaddr_in socketAddress = {
 		.sin_family=AF_INET,
 		.sin_addr={
@@ -25,55 +25,53 @@ int main(int argc, char *argv[]) {
 		},
 		.sin_port=htons(serverPort)
 	};
-	int socketDescriptor = 0;
 
+	int socketDescriptor = 0;
 	if ((socketDescriptor = socket(socketAddress.sin_family, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-		printf("\n[ERROR] Socket creation failed.");
+		printf("\r[ERROR] Socket creation failed.\n");
 		return -1;
 	}
 
 	if (bind(socketDescriptor, (struct sockaddr*) &socketAddress, sizeof(socketAddress)) < 0) {
-		printf("\n[ERROR] Socket bind failed.");
+		printf("\r[ERROR] Socket bind failed.\n");
 		return -1;
 	}
 
 	if (listen(socketDescriptor, MAX_OUTSTANDING_CONNECTION_REQUEST) < 0) {
-		printf("\n[ERROR] Starting listening income connections failed.");
+		printf("\r[ERROR] Starting listening income connections failed.\n");
 		return -1;
 	}
 
+	printf("\rListening on port %d\n", serverPort);
 
 	struct sockaddr_in clientAddress;
         socklen_t clientAddressLength = sizeof(clientAddress);
 	int clientDescriptor;
 	if ((clientDescriptor = accept(socketDescriptor, (struct sockaddr *) &clientAddress, &clientAddressLength)) < 0) {
-		printf("[ERROR] accept() failed");
+		printf("\r[ERROR] accept() failed\n");
 		return -1;
 	}
 
 
 
-	printf("\nStarting communication because a client has connected to server.");
+	printf("\rStarting communication because a client has connected to server.\n");
 	char clientName[INET_ADDRSTRLEN];
 	if (inet_ntop(socketAddress.sin_family, &clientAddress.sin_addr.s_addr, clientName, sizeof(clientName)) == NULL) {
-		printf("[ERROR] Unable to client address");
+		printf("\r[ERROR] Unable to client address\n");
 		return -1;
 	} 
+
+	printf("\rReceiving message from client...\n");
 	char buffer[BUFFER_SIZE];
-
-
-
-	printf("\nReceiving message from client...");
 	ssize_t numBytesRcvd = recv(clientDescriptor, buffer, BUFFER_SIZE, 0);
 	if (numBytesRcvd < 0) {
-		printf("\n[ERROR] receive() failed");
+		printf("\r[ERROR] receive() failed\n");
 		return -1;
 	}
 	printf("\n");
 	fputs(buffer, stdout);
 
-	printf("\nClosing communication");
-
+	printf("\rClosing communication\n");
         close(clientDescriptor);
         close(socketDescriptor);
 
