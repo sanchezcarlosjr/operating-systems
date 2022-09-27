@@ -63,17 +63,18 @@ int main(int argc, char *argv[]) {
 
 	printf("\rReceiving message from client...\n");
 	char buffer[BUFFER_SIZE];
-	ssize_t numBytesRcvd = recv(clientDescriptor, buffer, BUFFER_SIZE, 0);
-	if (numBytesRcvd < 0) {
-		printf("\r[ERROR] receive() failed\n");
+	if (recv(clientDescriptor, buffer, BUFFER_SIZE, 0) < 0) {
+		printf("\r[ERROR] Reception failed.\n");
 		return -1;
 	}
-	printf("\n");
-	fputs(buffer, stdout);
+	printf("\rMessage: %s\n", buffer);
 
-	printf("\rClosing communication\n");
+
+	printf("\rClosing communication...\n");
         close(clientDescriptor);
         close(socketDescriptor);
+
+	printf("\rServer closes comunnication.\n");
 
 	return 0;
 }
