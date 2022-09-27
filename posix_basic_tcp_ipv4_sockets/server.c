@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
 	struct sockaddr_in socketAddress = {
 		.sin_family=AF_INET,
 		.sin_addr={
-			.s_addr=htonl(INADDR_ANY)
+			.s_addr=htonl(INADDR_ANY) // it puts server's IPv4 automatically
 		},
 		.sin_port=htons(serverPort)
 	};
