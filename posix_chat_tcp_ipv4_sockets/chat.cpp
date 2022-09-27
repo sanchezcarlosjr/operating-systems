@@ -84,14 +84,9 @@ public:
 		char message[BUFFER_SIZE-10];
 		printf("\n>");
 		scanf("% [^\n]s", message);
-		size_t messageLength = strlen(message);
-		ssize_t numBytes = send(socket->socketDescriptor, message, messageLength, 0);
+		ssize_t numBytes = send(socket->socketDescriptor, message, sizeof(message), 0);
 		if (numBytes < 0) {
 			fputs("\r[ERROR] send failed\n", stderr);
-			exit(EXIT_FAILURE);
-		}
-		if (numBytes != messageLength) {
-			fputs("\r[ERROR] send un expected number of bytes\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 		return new Done();
