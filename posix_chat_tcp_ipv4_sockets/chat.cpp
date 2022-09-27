@@ -73,6 +73,7 @@ public:
 			}
 			buffer[numBytes] = '\0';
 			printf("\r[PEER] %s:%d sent %s\n", socket->peerName, ntohs(socket->peerAddress.sin_port), buffer);
+			sleep(5);
 		}
 		return new Done();
 	}
