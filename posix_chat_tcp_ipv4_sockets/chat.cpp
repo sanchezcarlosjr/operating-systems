@@ -51,10 +51,7 @@ class Done: public State {
 		printf("\rClosing communication...\n");
 		close(s->peerDescriptor);
 		close(s->socketDescriptor);
-
 		printf("\rServer closes comunnication.\n");
-
-
 		return this;
 	}
 	bool isAcceptState() {
@@ -79,6 +76,7 @@ class PassiveSocket: public State {
 	State* transite(Socket* socket) {
 		const char* message = "MESSAGE FROM PASSIVE";
 		size_t messageLength = strlen(message);
+		printf("\rSending message to server...\n");
 		ssize_t numBytes = send(socket->socketDescriptor, message, messageLength, 0);
 		if (numBytes < 0) {
 			fputs("\r[ERROR] send failed\n", stderr);
@@ -103,17 +101,18 @@ class BindingSocket: public State {
 		};
 		if (bind(s->socketDescriptor, (struct sockaddr*) &s->socketAddress, sizeof(s->socketAddress)) < 0) {
 			printf("\r[ERROR] Socket bind failed.\n");
-			exit(-1);
+			exit(EXIT_FAILURE);
 		}
 		if (listen(s->socketDescriptor, MAX_OUTSTANDING_CONNECTION_REQUEST) < 0) {
 			printf("\r[ERROR] Starting listening income connections failed.\n");
-			exit(-1);
+			exit(EXIT_FAILURE);
 		}
 		struct sockaddr_in sin;
 		socklen_t len = sizeof(sin);
 		if (getsockname(s->socketDescriptor, (struct sockaddr *)&sin, &len) == -1) {
 			perror("getsockname");
-			exit(-1);
+			printf("\r[ERROR] SO cannot find an available port\n");
+			exit(EXIT_FAILURE);
 		}
 		s->socketPort = ntohs(sin.sin_port);
 		printf("\rListening on port %d\n", s->socketPort);
@@ -122,12 +121,12 @@ class BindingSocket: public State {
 		socklen_t peerAddressLength = sizeof(s->peerAddress);
 		if ((s->peerDescriptor = accept(s->socketDescriptor, (struct sockaddr *) &s->peerAddress, &peerAddressLength)) < 0) {
 			printf("\r[ERROR] accept() failed\n");
-			exit(-1);
+			exit(EXIT_FAILURE);
 		}
 		char peerName[INET_ADDRSTRLEN];
 		if (inet_ntop(s->addressFamily, &s->peerAddress.sin_addr.s_addr, peerName, sizeof(peerName)) == NULL) {
 			printf("\r[ERROR] Unable to client address\n");
-			exit(-1);
+			exit(EXIT_FAILURE);
 		}
 		return new ActiveSocket();
 	}
@@ -172,6 +171,7 @@ public:
 		}
 		Socket* execute() {
 			while(!(currentState = currentState->transite(socket))->isAcceptState());
+			currentState->transite(socket);
 			return socket;
 		}
 };
