@@ -88,7 +88,7 @@ public:
 		char* message;
 		while(true) {
 			printf("\r\r>");
-			scanf("%ms", &message);
+			scanf(" %m[^\n]s", &message);
 			size_t messageLength = strlen(message);
 			ssize_t numBytes = send(socket->socketDescriptor, message, messageLength, 0);
 			if (numBytes < 0) {
