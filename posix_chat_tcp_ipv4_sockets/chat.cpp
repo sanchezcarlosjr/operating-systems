@@ -81,14 +81,15 @@ public:
 class PassiveSocket: public State {
 public:
 	State* transite(Socket* socket) {
-		char message[10];
+		char* message;
 		printf("\r>\n");
-		scanf(" %[^\n]s", message);
+		scanf("%ms", &message);
 		ssize_t numBytes = send(socket->socketDescriptor, message, strlen(message), 0);
 		if (numBytes < 0) {
 			fputs("\r[ERROR] send failed\n", stderr);
 			exit(EXIT_FAILURE);
 		}
+		free(message);
 		return new Done();
 	}
 	void receive(Socket* socket) {
