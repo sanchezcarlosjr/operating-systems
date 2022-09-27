@@ -81,9 +81,8 @@ public:
 class PassiveSocket: public State {
 public:
 	State* transite(Socket* socket) {
-		std::thread thread(&PassiveSocket::receive, this, socket);
-		char message[BUFFER_SIZE];
-		printf("\n>", message);
+		char message[BUFFER_SIZE-10];
+		printf("\n>");
 		scanf("% [^\n]s", message);
 		size_t messageLength = strlen(message);
 		ssize_t numBytes = send(socket->socketDescriptor, message, messageLength, 0);
