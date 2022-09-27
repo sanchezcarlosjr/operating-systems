@@ -65,13 +65,15 @@ class ActiveSocket: public State {
 public:
 	State* transite(Socket* socket) {
 		char buffer[BUFFER_SIZE];
-		ssize_t numBytes = 0;
-		if ((numBytes = recv(socket->peerDescriptor, buffer, BUFFER_SIZE-1, 0)) < 0) {
-			printf("\r[ERROR] Reception failed.\n");
-			exit(EXIT_FAILURE);
+		while(true) {
+			ssize_t numBytes = 0;
+			if ((numBytes = recv(socket->peerDescriptor, buffer, BUFFER_SIZE-1, 0)) < 0) {
+				printf("\r[ERROR] Reception failed.\n");
+				exit(EXIT_FAILURE);
+			}
+			buffer[numBytes] = '\0';
+			printf("\r[PEER] %s:%d sent %s\n", socket->peerName, ntohs(socket->peerAddress.sin_port), buffer);
 		}
-		buffer[numBytes] = '\0';
-		printf("\r[PEER] %s:%d sent %s\n", socket->peerName, ntohs(socket->peerAddress.sin_port), buffer);
 		return new Done();
 	}
 
@@ -84,14 +86,15 @@ class PassiveSocket: public State {
 public:
 	State* transite(Socket* socket) {
 		char* message;
-		printf("\r>");
+		printf("\r\r>");
 		scanf("%ms", &message);
-		ssize_t numBytes = send(socket->socketDescriptor, message, strlen(message), 0);
+		size_t messageLength = strlen(message);
+		ssize_t numBytes = send(socket->socketDescriptor, message, messageLength, 0);
 		if (numBytes < 0) {
 			fputs("\r[ERROR] send failed\n", stderr);
 			exit(EXIT_FAILURE);
 		}
-		if (numBytes != strlen(message)) {
+		if (numBytes != messageLength) {
 			fputs("\r[ERROR] send unexpected number of bytes.\n", stderr);
 			exit(EXIT_FAILURE);
 		}
