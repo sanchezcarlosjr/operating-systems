@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <thread>
 
 #define MAX_OUTSTANDING_CONNECTION_REQUEST 1
 #define BUFFER_SIZE 512
@@ -20,6 +21,7 @@ class Socket {
 		struct sockaddr_in socketAddress;
 		int socketPort;
 		struct sockaddr_in peerAddress;
+		char peerName[INET_ADDRSTRLEN];
 		const char* peerAddressIPv4;
 		bool isPassive = false;
 		Socket() {}
@@ -60,33 +62,71 @@ class Done: public State {
 };
 
 class ActiveSocket: public State {
+public:
 	State* transite(Socket* socket) {
-		printf("\rReceiving message from client...\n");
-		char buffer[BUFFER_SIZE];
-		if (recv(socket->peerDescriptor, buffer, BUFFER_SIZE, 0) < 0) {
-			printf("\r[ERROR] Reception failed.\n");
-			exit(EXIT_FAILURE);
+		std::thread thread(&ActiveSocket::receive, this, socket);
+		while(true) {
+			char message[BUFFER_SIZE];
+			printf("\n>", message);
+			scanf("% [^\n]s", message);
+			size_t messageLength = strlen(message);
+			ssize_t numBytes = send(socket->peerDescriptor, message, messageLength, 0);
+			if (numBytes < 0) {
+				fputs("\r[ERROR] send failed\n", stderr);
+				exit(EXIT_FAILURE);
+			}
+			if (numBytes != messageLength) {
+				fputs("\r[ERROR] send un expected number of bytes\n", stderr);
+				exit(EXIT_FAILURE);
+			}
 		}
-		printf("\rMessage: %s\n", buffer);
 		return new Done();
+	}
+
+	void receive(Socket* socket) {
+		while(true) {
+			char buffer[BUFFER_SIZE];
+			if (recv(socket->socketDescriptor, buffer, BUFFER_SIZE, 0) < 0) {
+				printf("\r[ERROR] Reception failed.\n");
+				exit(EXIT_FAILURE);
+			}
+			printf("\rPeer: %s\n", buffer);
+			sleep(2);
+		}
 	}
 };
 
 class PassiveSocket: public State {
+public:
 	State* transite(Socket* socket) {
-		const char* message = "MESSAGE FROM PASSIVE";
-		size_t messageLength = strlen(message);
-		printf("\rSending message to server...\n");
-		ssize_t numBytes = send(socket->socketDescriptor, message, messageLength, 0);
-		if (numBytes < 0) {
-			fputs("\r[ERROR] send failed\n", stderr);
-			exit(EXIT_FAILURE);
-		}
-		if (numBytes != messageLength) {
-			fputs("\r[ERROR] send un expected number of bytes\n", stderr);
-			exit(EXIT_FAILURE);
+		std::thread thread(&PassiveSocket::receive, this, socket);
+		while(true) {
+			char message[BUFFER_SIZE];
+			printf("\n>", message);
+			scanf("% [^\n]s", message);
+			size_t messageLength = strlen(message);
+			ssize_t numBytes = send(socket->socketDescriptor, message, messageLength, 0);
+			if (numBytes < 0) {
+				fputs("\r[ERROR] send failed\n", stderr);
+				exit(EXIT_FAILURE);
+			}
+			if (numBytes != messageLength) {
+				fputs("\r[ERROR] send un expected number of bytes\n", stderr);
+				exit(EXIT_FAILURE);
+			}
 		}
 		return new Done();
+	}
+	void receive(Socket* socket) {
+		while(true) {
+		        char buffer[BUFFER_SIZE];
+			if (recv(socket->socketDescriptor, buffer, BUFFER_SIZE, 0) < 0) {
+				printf("\r[ERROR] Reception failed.\n");
+				exit(EXIT_FAILURE);
+			}
+			printf("\rPeer: %s\n", buffer);
+			sleep(2);
+		}
 	}
 };
 
@@ -123,8 +163,7 @@ class BindingSocket: public State {
 			printf("\r[ERROR] accept() failed\n");
 			exit(EXIT_FAILURE);
 		}
-		char peerName[INET_ADDRSTRLEN];
-		if (inet_ntop(s->addressFamily, &s->peerAddress.sin_addr.s_addr, peerName, sizeof(peerName)) == NULL) {
+		if (inet_ntop(s->addressFamily, &s->peerAddress.sin_addr.s_addr, s->peerName, sizeof(s->peerName)) == NULL) {
 			printf("\r[ERROR] Unable to client address\n");
 			exit(EXIT_FAILURE);
 		}
