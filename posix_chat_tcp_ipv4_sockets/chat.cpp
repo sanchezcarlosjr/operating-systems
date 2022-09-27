@@ -104,10 +104,6 @@ public:
 
 class ActiveSocket: public KindSocket {
 public:
-	State* transite(Socket* socket) {
-		sendMessages(socket);
-		return new Done();
-	}
 	int to(Socket* socket) {
 		return socket->peerDescriptor;
 	}
@@ -118,10 +114,6 @@ public:
 
 class PassiveSocket: public KindSocket {
 public:
-	State* transite(Socket* socket) {
-		receiveMessages(socket);
-		return new Done();
-	}
 	int to(Socket* socket) {
 		return socket->socketDescriptor;
 	}
