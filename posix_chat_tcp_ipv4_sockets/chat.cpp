@@ -73,7 +73,8 @@ public:
 	void sendMessages(Socket* socket) {
 		char* message;
 		while(true) {
-			scanf(" %m[^\\]s", &message);
+			printf("\r");
+			scanf(" %m[^\n]s", &message);
 			fflush(stdout);
 			size_t messageLength = strlen(message);
 			ssize_t numBytes = send(to(socket), message, messageLength, 0);
@@ -97,8 +98,7 @@ public:
 				exit(EXIT_FAILURE);
 			}
 			buffer[numBytes] = '\0';
-			//printf("%d:%d %s", socket->peerName, ntohs(socket->peerAddress.sin_port), buffer);
-			printf("%s", buffer);
+			printf("\r%s:%d %s\n", socket->peerName, ntohs(socket->peerAddress.sin_port), buffer);
 			fflush(stdout);
 		}
 	}	
