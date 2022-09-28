@@ -98,7 +98,7 @@ public:
 				exit(EXIT_FAILURE);
 			}
 			buffer[numBytes] = '\0';
-			printf("\r%s:%d\n%s", socket->peerName, ntohs(socket->peerAddress.sin_port), buffer);
+			printf("%s", socket->peerName, ntohs(socket->peerAddress.sin_port), buffer);
 			fflush(stdout);
 		}
 	}	
