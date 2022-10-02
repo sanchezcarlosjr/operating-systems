@@ -62,7 +62,7 @@ class ActiveConsolePlayer: public LocalConsolePlayer {
 	public:	
 		ActiveConsolePlayer(char symbol, Notification* notification): LocalConsolePlayer(symbol), notification(notification) {}	
 		Coordinate move() {
-			std::cout << "Move x y:";
+			std::cout << "Move x y where 0<=x<=2 and 0<=y<=2:";
 			std::cin >> coordinate.row >> coordinate.column;
 			std::cout << "\n";
 			std::stringstream ss;
