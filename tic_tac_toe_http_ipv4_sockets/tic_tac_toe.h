@@ -117,7 +117,6 @@ class ConsoleBoard {
 			return NEXT;
 		}
 		void draw() {
-			system("clear");
 			for(int row=0; row<3; row++) {
 				for(int column=0; column<3; column++)
 					std::cout<< board[row][column] << (column < 2 ? '|': EMPTY_COORDINATE);
