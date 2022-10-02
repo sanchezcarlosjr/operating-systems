@@ -40,14 +40,16 @@ class Socket: public Notification {
 			this->isPassive = true;
 		}
 		char* receiveMessage() {
-			char* buffer;
+			char buffer[BUFFER_SIZE];
 			ssize_t numBytes = 0;
 			if ((numBytes = recv(from, buffer, BUFFER_SIZE-1, 0)) < 0) {
 				printf("\r[ERROR] Reception failed.\n");
 				exit(EXIT_FAILURE);
 			}
 			buffer[numBytes] = '\0';
-			return buffer;
+			char* message;
+			strcpy(message,buffer);
+			return message;
 		}
 		void sendMessage(const char* message) {
 			size_t messageLength = strlen(message);
