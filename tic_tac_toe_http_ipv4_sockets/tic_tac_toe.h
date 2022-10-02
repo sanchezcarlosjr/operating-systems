@@ -13,10 +13,11 @@ struct Coordinate {
 
 
 
+long int BOARD[3][3] = {{0x80080080, 0x40008000, 0x20000808}, {0x08040000, 0x04004044, 0x02000400}, {0x00820002, 0x00402000, 0x00200220}};
+
 class Player {
 	private:
-		long board;
-		long int BOARD[3][3] = {{0x80080080, 0x40008000, 0x20000808}, {0x08040000, 0x04004044, 0x02000400}, {0x00820002, 0x00402000, 0x00200220}};
+		long board = 0x0;
 	protected:
 		Coordinate coordinate;
 	public:
@@ -28,7 +29,6 @@ class Player {
 		virtual bool askIfContinueMatch() = 0;
 		void save() {
 			board |= BOARD[coordinate.row][coordinate.column];
-			std::cout << "====" << board <<  "====";
 		}
 		bool isWinning() {
 			return (board & (board >> 1) & (board << 1)) != 0;
