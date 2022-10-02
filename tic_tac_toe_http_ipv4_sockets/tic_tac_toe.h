@@ -71,6 +71,7 @@ class ActiveConsolePlayer: public LocalConsolePlayer {
 			std::stringstream ss;
 			ss << coordinate.row << " " << coordinate.column;
 			notification->sendMessage(ss.str().c_str());
+			sleep(5);
 			return coordinate;
 		}
 };
