@@ -43,6 +43,7 @@ class Socket: public Notification {
 			char buffer[BUFFER_SIZE];
 			ssize_t numBytes = 0;
 			if ((numBytes = recv(from, buffer, BUFFER_SIZE-1, 0)) < 0) {
+				std::cout << buffer << std::endl;
 				printf("\r[ERROR] Reception failed.\n");
 				exit(EXIT_FAILURE);
 			}
@@ -61,7 +62,7 @@ class Socket: public Notification {
 			if (numBytes != messageLength) {
 				fputs("\r[ERROR] send unexpected number of bytes.\n", stderr);
 				exit(EXIT_FAILURE);
-				}
+			}
 		}
 		bool isDone() {
 			return false;
@@ -105,8 +106,7 @@ public:
 		printf("\rYou have connected succesful to %s:%d\n", socket->peerName, ntohs(socket->peerAddress.sin_port));
 		socket->to = to(socket);
 		socket->from = from(socket);
-		Game game(new ConsoleBoard, {new ActiveConsolePlayer(X, socket), new PasiveConsolePlayer(O, socket)});
-		game.play();
+		socket->sendMessage("ABC");
 		return new Done();
 	}
 	int to(Socket* socket) {
@@ -123,8 +123,7 @@ public:
 		printf("\rYou have connected succesful to %s:%d\n", socket->peerName, ntohs(socket->peerAddress.sin_port));
 		socket->to = to(socket);
 		socket->from = from(socket);
-		Game game(new ConsoleBoard, {new PasiveConsolePlayer(X, socket), new ActiveConsolePlayer(O, socket)});
-		game.play();
+		socket->receiveMessage();
 		return new Done();
 	}
 	int to(Socket* socket) {
