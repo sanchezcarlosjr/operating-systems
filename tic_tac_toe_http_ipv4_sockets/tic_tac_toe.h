@@ -1,6 +1,5 @@
 #include <iostream>
 #include <string>
-#include <stdlib.h>
 #include "notification.h"
 #include <vector>
 #include <sstream>
@@ -13,11 +12,11 @@ struct Coordinate {
 
 
 
-long int BOARD[3][3] = {{0x80080080, 0x40008000, 0x20000808}, {0x08040000, 0x04004044, 0x02000400}, {0x00820002, 0x00402000, 0x00200220}};
 
 class Player {
 	private:
 		long board;
+		long int BOARD[3][3] = {{0x80080080, 0x40008000, 0x20000808}, {0x08040000, 0x04004044, 0x02000400}, {0x00820002, 0x00402000, 0x00200220}};
 	protected:
 		Coordinate coordinate;
 	public:
@@ -29,6 +28,7 @@ class Player {
 		virtual bool askIfContinueMatch() = 0;
 		void save() {
 			board |= BOARD[coordinate.row][coordinate.column];
+			std::cout << "====" << board <<  "====";
 		}
 		bool isWinning() {
 			return (board & (board >> 1) & (board << 1)) != 0;
@@ -65,8 +65,9 @@ class ActiveConsolePlayer: public LocalConsolePlayer {
 	public:	
 		ActiveConsolePlayer(char symbol, Notification* notification): LocalConsolePlayer(symbol), notification(notification) {}	
 		Coordinate move() {
-			std::cout << "\nMove x y:";
+			std::cout << "Move x y:";
 			std::cin >> coordinate.row >> coordinate.column;
+			std::cout << "\n";
 			std::stringstream ss;
 			ss << coordinate.row << " " << coordinate.column;
 			notification->sendMessage(ss.str().c_str());
@@ -84,7 +85,7 @@ class PasiveConsolePlayer: public LocalConsolePlayer {
 			std::cout << std::endl << "You've lost!";
 		}
 		Coordinate move() {
-			std::cout << std::endl << "Wait your turn!" << std::endl;
+			std::cout << "Wait your turn!\n\n";
 			std::stringstream ss(notification->receiveMessage());
 			ss >> coordinate.row >> coordinate.column;
 			return coordinate;
