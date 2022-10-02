@@ -11,8 +11,9 @@ struct Coordinate {
 	char symbol;
 };
 
-long int BOARD[3][3] = {{0x80080080, 0x40008000, 0x20000808}, {0x08040000, 0x04004044, 0x02000400}, {0x00820002, 0x00402000, 0x00200220}};
 
+
+long int BOARD[3][3] = {{0x80080080, 0x40008000, 0x20000808}, {0x08040000, 0x04004044, 0x02000400}, {0x00820002, 0x00402000, 0x00200220}};
 
 class Player {
 	private:
@@ -66,7 +67,9 @@ class ActiveConsolePlayer: public LocalConsolePlayer {
 		Coordinate move() {
 			std::cout << "\nMove x y:";
 			std::cin >> coordinate.row >> coordinate.column;
-			notification->sendMessage("0 0");
+			std::stringstream ss;
+			ss << coordinate.row << " " << coordinate.column;
+			notification->sendMessage(ss.str().c_str());
 			return coordinate;
 		}
 };
