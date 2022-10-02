@@ -42,8 +42,8 @@ class Socket: public Notification {
 		char* receiveMessage() {
 			char buffer[BUFFER_SIZE];
 			ssize_t numBytes = 0;
+			std::cout << from << std::endl;
 			if ((numBytes = recv(from, buffer, BUFFER_SIZE-1, 0)) < 0) {
-				std::cout << buffer << std::endl;
 				printf("\r[ERROR] Reception failed.\n");
 				exit(EXIT_FAILURE);
 			}

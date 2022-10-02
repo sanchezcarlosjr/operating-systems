@@ -1,8 +1,11 @@
+all:
+	clang++ -O3 tcp_tic_tac_toe.cpp -o tictactoe.out
+
 console:
-	g++ -O3 console_tic_tac_toe.cpp -o console.out
+	clang++ -O3 console_tic_tac_toe.cpp -o console.out
 
 tcp:
-	g++ -O3 tcp_tic_tac_toe.cpp -o tictactoe.out
+	clang++ -O3 tcp_tic_tac_toe.cpp -o tictactoe.out
 
 .PHONY : clean
 clean : 
