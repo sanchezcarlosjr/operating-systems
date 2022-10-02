@@ -8,11 +8,12 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <thread>
+#include "tic_tac_toe.h"
 
 #define MAX_OUTSTANDING_CONNECTION_REQUEST 1
 #define BUFFER_SIZE 512
 
-class Socket {
+class Socket: public Notification {
 	public:
 		int bufferSize=512;
 		int maxOutstandingConnectionRequest=1;
@@ -25,6 +26,8 @@ class Socket {
 		char peerName[INET_ADDRSTRLEN];
 		const char* peerAddressIPv4;
 		bool isPassive = false;
+		int to;
+		int from;
 		Socket() {}
 		Socket(const char* peerAddressIPv4, const char* peerPort): peerAddressIPv4(peerAddressIPv4) {
 			peerAddress = {
@@ -35,6 +38,31 @@ class Socket {
 				}
 			};
 			this->isPassive = true;
+		}
+		char* receiveMessage() {
+			char* buffer;
+			ssize_t numBytes = 0;
+			if ((numBytes = recv(from, buffer, BUFFER_SIZE-1, 0)) < 0) {
+				printf("\r[ERROR] Reception failed.\n");
+				exit(EXIT_FAILURE);
+			}
+			buffer[numBytes] = '\0';
+			return buffer;
+		}
+		void sendMessage(const char* message) {
+			size_t messageLength = strlen(message);
+			ssize_t numBytes = send(to, message, messageLength, 0);
+			if (numBytes < 0) {
+				fputs("\r[ERROR] send failed\n", stderr);
+				exit(EXIT_FAILURE);
+			}
+			if (numBytes != messageLength) {
+				fputs("\r[ERROR] send unexpected number of bytes.\n", stderr);
+				exit(EXIT_FAILURE);
+				}
+		}
+		bool isDone() {
+			return false;
 		}
 };
 
@@ -63,49 +91,22 @@ class Done: public State {
 class KindSocket: public State {
 public:
 	virtual State* transite(Socket* socket) {
-		printf("\rYou have connected succesful to %s:%d\n", socket->peerName, ntohs(socket->peerAddress.sin_port));
-		std::thread t(&KindSocket::receiveMessages, this, socket);
-		sendMessages(socket);
 		return new Done();
 	}
 	virtual int to(Socket* socket) = 0;
 	virtual int from(Socket* socket) = 0;
-	void sendMessages(Socket* socket) {
-		char* message;
-		while(true) {
-			printf("\r");
-			scanf(" %m[^\n]s", &message);
-			fflush(stdout);
-			size_t messageLength = strlen(message);
-			ssize_t numBytes = send(to(socket), message, messageLength, 0);
-			if (numBytes < 0) {
-				fputs("\r[ERROR] send failed\n", stderr);
-				exit(EXIT_FAILURE);
-			}
-			if (numBytes != messageLength) {
-				fputs("\r[ERROR] send unexpected number of bytes.\n", stderr);
-				exit(EXIT_FAILURE);
-			}
-			free(message);
-		}
-	}
-	void receiveMessages(Socket* socket) {
-		char buffer[BUFFER_SIZE];
-		while(true) {
-			ssize_t numBytes = 0;
-			if ((numBytes = recv(from(socket), buffer, BUFFER_SIZE-1, 0)) < 0) {
-				printf("\r[ERROR] Reception failed.\n");
-				exit(EXIT_FAILURE);
-			}
-			buffer[numBytes] = '\0';
-			printf("\r%s:%d %s\n", socket->peerName, ntohs(socket->peerAddress.sin_port), buffer);
-			fflush(stdout);
-		}
-	}	
 };
 
 class ActiveSocket: public KindSocket {
 public:
+	virtual State* transite(Socket* socket) {	
+		printf("\rYou have connected succesful to %s:%d\n", socket->peerName, ntohs(socket->peerAddress.sin_port));
+		socket->to = to(socket);
+		socket->from = from(socket);
+		Game game(new ConsoleBoard, {new ActiveConsolePlayer(X, socket), new PasiveConsolePlayer(O, socket)});
+		game.play();
+		return new Done();
+	}
 	int to(Socket* socket) {
 		return socket->peerDescriptor;
 	}
@@ -116,6 +117,14 @@ public:
 
 class PassiveSocket: public KindSocket {
 public:
+	virtual State* transite(Socket* socket) {	
+		printf("\rYou have connected succesful to %s:%d\n", socket->peerName, ntohs(socket->peerAddress.sin_port));
+		socket->to = to(socket);
+		socket->from = from(socket);
+		Game game(new ConsoleBoard, {new PasiveConsolePlayer(X, socket), new ActiveConsolePlayer(O, socket)});
+		game.play();
+		return new Done();
+	}
 	int to(Socket* socket) {
 		return socket->socketDescriptor;
 	}
@@ -240,14 +249,3 @@ public:
 			return socket;
 		}
 };
-
-
-int main(int argc, char *argv[]) {
-  if (argc != 3 && argc != 1) {
-	  printf("\rchat.out <PEER ADDRESS IPv4> <PEER PORT>\n");
-	  return EXIT_SUCCESS;
-  }
-  Machine machine(argc == 1 ? new Socket() : new Socket(argv[1], argv[2]));
-  machine.execute();
-  return EXIT_SUCCESS;
-}
