@@ -10,13 +10,13 @@
 #include <thread>
 #include "tic_tac_toe.h"
 
-#define MAX_OUTSTANDING_CONNECTION_REQUEST 1
+#define MAX_OUTSTANDING_CONNECTION_REQUEST 4
 #define BUFFER_SIZE 512
 
 class Socket: public Notification {
 	public:
-		int bufferSize=512;
-		int maxOutstandingConnectionRequest=1;
+		int bufferSize=BUFFER_SIZE;
+		int maxOutstandingConnectionRequest=MAX_OUTSTANDING_CONNECTION_REQUEST;
 		sa_family_t addressFamily=AF_INET;
 		int socketDescriptor;
 		int peerDescriptor;
@@ -39,17 +39,13 @@ class Socket: public Notification {
 			};
 			this->isPassive = true;
 		}
-		char* receiveMessage() {
+		std::string receiveMessage() {
 			char buffer[BUFFER_SIZE];
+			std::string message;
 			ssize_t numBytes = 0;
-			std::cout << from << std::endl;
-			if ((numBytes = recv(from, buffer, BUFFER_SIZE-1, 0)) < 0) {
-				printf("\r[ERROR] Reception failed.\n");
-				exit(EXIT_FAILURE);
+			while ((numBytes = recv(from, buffer, sizeof(buffer), 0)) > 0) {
+				message.append(buffer, numBytes);
 			}
-			buffer[numBytes] = '\0';
-			char* message;
-			strcpy(message,buffer);
 			return message;
 		}
 		void sendMessage(const char* message) {
@@ -106,7 +102,8 @@ public:
 		printf("\rYou have connected succesful to %s:%d\n", socket->peerName, ntohs(socket->peerAddress.sin_port));
 		socket->to = to(socket);
 		socket->from = from(socket);
-		socket->sendMessage("ABC");
+		Game game(new ConsoleBoard, {new ActiveConsolePlayer(X, socket), new PasiveConsolePlayer(O, socket)});
+		game.play();
 		return new Done();
 	}
 	int to(Socket* socket) {
@@ -123,7 +120,8 @@ public:
 		printf("\rYou have connected succesful to %s:%d\n", socket->peerName, ntohs(socket->peerAddress.sin_port));
 		socket->to = to(socket);
 		socket->from = from(socket);
-		socket->receiveMessage();
+		Game game(new ConsoleBoard, {new PasiveConsolePlayer(X, socket), new ActiveConsolePlayer(O, socket)});
+		game.play();
 		return new Done();
 	}
 	int to(Socket* socket) {
