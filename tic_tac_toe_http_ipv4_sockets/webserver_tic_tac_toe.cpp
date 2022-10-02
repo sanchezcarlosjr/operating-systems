@@ -13,10 +13,10 @@ public:
 
     WebSocket(char *ip, char *port) : Socket(ip, port) {}
 
-    void startActive() {
+    void view(std::string fileName) {
         std::string html = "HTTP/1.1 200 OK\nServer:sanchezcarlosjr\nContent-Type:text/html\nContent-Length: ";
         std::ifstream file;
-        file.open("index.html");
+        file.open(fileName);
         if (!file) {
             std::cout << "[ERROR] Unable to read file!";
             exit(EXIT_FAILURE);
@@ -29,6 +29,10 @@ public:
         html.append(ss.str());
         sendMessage(html);
         file.close();
+    }
+
+    void startActive() {
+        view("index.html");
     }
 
     void startPassive() {}
