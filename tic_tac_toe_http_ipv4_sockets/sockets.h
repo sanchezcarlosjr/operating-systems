@@ -51,22 +51,22 @@ class Socket: public Notification {
 			}
 			return message;
 		}
-		void sendMessage(const char* message) {
-			size_t messageLength = strlen(message);
-			ssize_t numBytes = send(to, message, messageLength, 0);
+		void sendMessage(std::string message) {
+			ssize_t numBytes = send(to, message.data(), message.length(), 0);
 			if (numBytes < 0) {
 				fputs("\r[ERROR] send failed\n", stderr);
 				exit(EXIT_FAILURE);
 			}
-			if (numBytes != messageLength) {
+			if (numBytes != message.length()) {
 				fputs("\r[ERROR] send unexpected number of bytes.\n", stderr);
 				exit(EXIT_FAILURE);
 			}
 		}
-		bool isDone() {
-			return false;
-		}
+		virtual void startActive() = 0; 
+		virtual void startPasive() = 0;
+		
 };
+
 
 class State {
 public:
@@ -105,8 +105,7 @@ public:
 		printf("\rYou have connected succesful to %s:%d\n", socket->peerName, ntohs(socket->peerAddress.sin_port));
 		socket->to = to(socket);
 		socket->from = from(socket);
-		Game game(new ConsoleBoard, {new ActiveConsolePlayer(X, socket), new PasiveConsolePlayer(O, socket)});
-		game.play();
+		socket->startActive();
 		return new Done();
 	}
 	int to(Socket* socket) {
@@ -123,8 +122,7 @@ public:
 		printf("\rYou have connected succesful to %s:%d\n", socket->peerName, ntohs(socket->peerAddress.sin_port));
 		socket->to = to(socket);
 		socket->from = from(socket);
-		Game game(new ConsoleBoard, {new PasiveConsolePlayer(X, socket), new ActiveConsolePlayer(O, socket)});
-		game.play();
+		socket->startPasive();
 		return new Done();
 	}
 	int to(Socket* socket) {

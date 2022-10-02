@@ -50,7 +50,7 @@ class LocalConsolePlayer: public Player {
 			return response == 'y';
 		}
 		Coordinate move() {
-			std::cout << "\rMove x y:";
+			std::cout << "\rMove row column:";
 			std::cin >> coordinate.row >> coordinate.column;
 			return coordinate;
 		}
@@ -62,12 +62,12 @@ class ActiveConsolePlayer: public LocalConsolePlayer {
 	public:	
 		ActiveConsolePlayer(char symbol, Notification* notification): LocalConsolePlayer(symbol), notification(notification) {}	
 		Coordinate move() {
-			std::cout << "Move x y where 0<=x<=2 and 0<=y<=2:";
+			std::cout << "Move row column where 0<=row<=2 and 0<=column<=2:";
 			std::cin >> coordinate.row >> coordinate.column;
 			std::cout << "\n";
 			std::stringstream ss;
 			ss << coordinate.row << " " << coordinate.column;
-			notification->sendMessage(ss.str().c_str());
+			notification->sendMessage(ss.str());
 			return coordinate;
 		}
 };
