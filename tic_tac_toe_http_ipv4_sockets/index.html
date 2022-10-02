@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe</title>
+    <style>
+        body {
+            font-family: "Lato", sans-serif;
+            text-align: center;
+        }
+
+        main {
+            display: flex;
+            justify-content: center;
+        }
+
+        section {
+            text-align: center;
+            padding: 30px;
+            background: #e5eaf5c0;
+        }
+
+        #field {
+            padding: 30px;
+        }
+
+        #container {
+            display: grid;
+            grid-template-columns: repeat(3, auto);
+            width: 306px;
+            margin: auto;
+        }
+        .cell {
+            font-family: "Finger Paint", sans-serif;
+            color: #232d55;
+            width: 100px;
+            height: 100px;
+            box-shadow: 0 0 0 1px #6e92a3;
+            border: 1px solid #6e92a3;
+            cursor: pointer;
+            line-height: 100px;
+            font-size: 60px;
+            background: #a0d2ebc0;
+        }
+
+        #sidebar {
+            width: 125px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        #player {
+            flex: 1;
+        }
+        #turns {
+            flex: 1;
+        }
+        #status {
+            flex: 4;
+        }
+        #restart {
+            flex: 1;
+        }
+
+        #player1,
+        #player2 {
+            box-sizing: border-box;
+            background: #d0bdf4;
+            border-radius: 4px;
+            padding: 10px 0;
+            margin: 0 0 10px 0;
+        }
+
+        #titleTurns {
+            font-size: 0.8em;
+        }
+        #numberTurns {
+            font-size: 1.4em;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+<h1 id="title">Tic tac toe</h1>
+<main>
+    <section id="field">
+        <div id="container">
+            <div id="0" class="cell"></div>
+            <div id="1" class="cell"></div>
+            <div id="2" class="cell"></div>
+            <div id="3" class="cell"></div>
+            <div id="4" class="cell"></div>
+            <div id="5" class="cell"></div>
+            <div id="6" class="cell"></div>
+            <div id="7" class="cell"></div>
+            <div id="8" class="cell"></div>
+        </div>
+    </section>
+    <section id="sidebar">
+        <div id="turns">
+            <p id="titleTurns">Number of turns</p>
+            <p id="numberTurns">0</p>
+        </div>
+        <h2 id="status"></h2>
+        <button id="restart">Play again</button>
+    </section>
+</main>
+</body>
+</html>

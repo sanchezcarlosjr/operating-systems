@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include "notification.h"
+#include "sockets/notification.h"
 #include <vector>
 #include <sstream>
 
@@ -16,9 +16,9 @@ class Player {
 	private:
 		long board = 0x0;
 	protected:
-		Coordinate coordinate;
+		Coordinate coordinate{};
 	public:
-		Player(char symbol=' ') {
+		explicit Player(char symbol=' ') {
 			coordinate.symbol=symbol;
 		}
 		virtual void win() = 0;
@@ -27,7 +27,7 @@ class Player {
 		void save() {
 			board |= BOARD[coordinate.row][coordinate.column];
 		}
-		bool isWinning() {
+		[[nodiscard]] bool isWinning() const {
 			return (board & (board >> 1) & (board << 1)) != 0;
 		}
 		virtual Coordinate move() = 0; 
@@ -36,20 +36,20 @@ class Player {
 
 class LocalConsolePlayer: public Player {
 	public:	
-		LocalConsolePlayer(char symbol): Player(symbol) {}
-		void win() {
+		explicit LocalConsolePlayer(char symbol): Player(symbol) {}
+		void win() override {
 			std::cout << std::endl << "You've won";
 		}
-		void tie() {
+		void tie() override {
 			std::cout << std::endl << "You tied";
 		}
-		bool askIfContinueMatch() {
+		bool askIfContinueMatch() override {
 			std::cout << std::endl << "Do you want continue? (y/n) ";
 			char response;
 			std::cin >> response;
 			return response == 'y';
 		}
-		Coordinate move() {
+		Coordinate move() override {
 			std::cout << "\rMove row column:";
 			std::cin >> coordinate.row >> coordinate.column;
 			return coordinate;
@@ -61,7 +61,7 @@ class ActiveConsolePlayer: public LocalConsolePlayer {
 		Notification* notification;
 	public:	
 		ActiveConsolePlayer(char symbol, Notification* notification): LocalConsolePlayer(symbol), notification(notification) {}	
-		Coordinate move() {
+		Coordinate move() override {
 			std::cout << "Move row column where 0<=row<=2 and 0<=column<=2:";
 			std::cin >> coordinate.row >> coordinate.column;
 			std::cout << "\n";
@@ -73,15 +73,15 @@ class ActiveConsolePlayer: public LocalConsolePlayer {
 };
 
 
-class PasiveConsolePlayer: public LocalConsolePlayer {
+class PassiveConsolePlayer: public LocalConsolePlayer {
 	private:
 		Notification* notification;
 	public:	
-		PasiveConsolePlayer(char symbol, Notification* notification): LocalConsolePlayer(symbol), notification(notification) {}	
-		void win() {
+		PassiveConsolePlayer(char symbol, Notification* notification): LocalConsolePlayer(symbol), notification(notification) {}
+		void win() override {
 			std::cout << "You've lost!" <<std::endl;
 		}
-		Coordinate move() {
+		Coordinate move() override {
 			std::cout << "Wait your turn!" << std::endl << std::endl;
 			std::stringstream ss(notification->receiveMessage());
 			ss >> coordinate.row >> coordinate.column;
@@ -94,7 +94,7 @@ class PasiveConsolePlayer: public LocalConsolePlayer {
 #define O 'o'
 
 #define WIN  1
-#define ERROR -1
+#define ERROR (-1)
 #define NEXT 2
 
 
@@ -103,9 +103,9 @@ class ConsoleBoard {
 		char board[3][3];
 	public:
 		void reset() {
-			for(int row=0; row<3; row++)
-				for(int column=0; column<3; column++)
-					board[row][column] = EMPTY_COORDINATE;
+			for(auto & row : board)
+				for(char & column : row)
+					column = EMPTY_COORDINATE;
 		}
 		int save(Player* player) {
 			Coordinate coordinate = player->move();
@@ -118,9 +118,9 @@ class ConsoleBoard {
 			return NEXT;
 		}
 		void draw() {
-			for(int row=0; row<3; row++) {
+			for(auto & row : board) {
 				for(int column=0; column<3; column++)
-					std::cout<< board[row][column] << (column < 2 ? '|': EMPTY_COORDINATE);
+					std::cout<< row[column] << (column < 2 ? '|': EMPTY_COORDINATE);
 				std::cout << std::endl << "-----" << std::endl;
 			}
 		}
@@ -145,7 +145,7 @@ class Game {
 		Player* currentPlayer() {
 			return players[turn%PLAYERS];
 		}
-		int transite(int state) {
+		int transit(int state) {
 			if(state == NEW_GAME) {
 				return currentPlayer()->askIfContinueMatch() ? RESET : DONE;
 			}
@@ -174,6 +174,6 @@ class Game {
 		Game(ConsoleBoard* board, std::vector<Player*> players): board(board), players(players){}
 		void play() {
 			int state = RESET;
-			while((state = transite(state)) != DONE);
+			while((state = transit(state)) != DONE);
 		}
 };
