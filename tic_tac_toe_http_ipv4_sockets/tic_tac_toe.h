@@ -82,7 +82,7 @@ class PasiveConsolePlayer: public LocalConsolePlayer {
 			std::cout << "You've lost!" <<std::endl;
 		}
 		Coordinate move() {
-			std::cout << "Wait your turn!" << std::endl;
+			std::cout << "Wait your turn!" << std::endl << std::endl;
 			std::stringstream ss(notification->receiveMessage());
 			ss >> coordinate.row >> coordinate.column;
 			return coordinate;
