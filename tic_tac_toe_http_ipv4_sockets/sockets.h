@@ -43,7 +43,7 @@ class Socket: public Notification {
 			char buffer[BUFFER_SIZE];
 			std::string message;
 			ssize_t numBytes = 0;
-			while ((numBytes = recv(from, buffer, BUFFER_SIZE-1, 0)) > 0) {	
+			if((numBytes = recv(from, buffer, BUFFER_SIZE-1, 0)) > 0) {	
 				message.append(buffer, numBytes);
 			}
 			if (numBytes < 0) {
