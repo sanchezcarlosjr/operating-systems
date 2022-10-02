@@ -10,9 +10,6 @@ struct Coordinate {
 	char symbol;
 };
 
-
-
-
 long int BOARD[3][3] = {{0x80080080, 0x40008000, 0x20000808}, {0x08040000, 0x04004044, 0x02000400}, {0x00820002, 0x00402000, 0x00200220}};
 
 class Player {
@@ -82,10 +79,10 @@ class PasiveConsolePlayer: public LocalConsolePlayer {
 	public:	
 		PasiveConsolePlayer(char symbol, Notification* notification): LocalConsolePlayer(symbol), notification(notification) {}	
 		void win() {
-			std::cout << std::endl << "You've lost!";
+			std::cout << "You've lost!" <<std::endl;
 		}
 		Coordinate move() {
-			std::cout << "Wait your turn!\n\n";
+			std::cout << "Wait your turn!" << std::endl;
 			std::stringstream ss(notification->receiveMessage());
 			ss >> coordinate.row >> coordinate.column;
 			return coordinate;

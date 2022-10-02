@@ -43,9 +43,8 @@ class Socket: public Notification {
 			char buffer[BUFFER_SIZE];
 			std::string message;
 			ssize_t numBytes = 0;
-			while ((numBytes = recv(from, buffer, BUFFER_SIZE-1, 0)) > 0) {	
+			while ((numBytes = recv(from, buffer, BUFFER_SIZE-1, 0)) > 0)
 				message.append(buffer, numBytes);
-			}
 			if (numBytes < 0) {
 				fputs("\r[ERROR] receive failed\n", stderr);
 				exit(EXIT_FAILURE);
@@ -53,7 +52,6 @@ class Socket: public Notification {
 			return message;
 		}
 		void sendMessage(const char* message) {
-			std::cout << "\n" << message << "\n";
 			size_t messageLength = strlen(message);
 			ssize_t numBytes = send(to, message, messageLength, 0);
 			if (numBytes < 0) {
