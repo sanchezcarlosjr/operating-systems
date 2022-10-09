@@ -40,7 +40,7 @@ public:
         this->isPassive = true;
     }
     std::string receiveMessage() override {
-        char buffer[BUFFER_SIZE];
+        char buffer[10000];
         std::string message;
         ssize_t numBytes = 0;
         if((numBytes = recv(from, buffer, BUFFER_SIZE-1, 0)) > 0)

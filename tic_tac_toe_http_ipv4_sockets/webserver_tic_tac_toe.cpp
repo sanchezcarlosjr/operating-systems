@@ -2,10 +2,16 @@
 #include <iostream>
 #include "sockets/socket.h"
 #include "sockets/socket_machine.h"
-#include<sstream>
+#include <sstream>
 #include <fstream>
+#include <regex>
+#include <vector>
+
+std::regex regex_request("(GET|POST) (/(\\?row=([0-8])&column=([0-8]))?)");
 
 class WebSocket : public Socket {
+private:
+	int players = 0;
 public:
     bool keepLiveSessionAfterDone = true;
 
@@ -32,18 +38,36 @@ public:
     }
 
     void startActive() {
-        view("index.html");
+	std::string req = receiveMessage();
+	std::smatch matches;
+	std::regex_search(req, matches, regex_request);
+	std::vector<std::string> request;
+	for (auto match: matches) {
+		std::string m = match.str();
+		if (m != "")
+			request.push_back(m);
+	}
+	if(request[1] == "GET" && request.size() == 3) {
+		view("index.html");
+		players++;
+	}
+	if(players == 2) {
+		players = 0;
+	}
+	if(request[1] == "GET" && request.size() == 6) {
+		sendMessage("0,X,Y");
+	}
     }
 
     void startPassive() {}
 };
 
 int main(int argc, char *argv[]) {
-    if (argc != 3 && argc != 1) {
-        printf("\rwebserver_tic_tac_toe.out <IP> <PORT>\n");
+    if (argc != 1) {
+        printf("\rwebserver_tic_tac_toe.out\n");
         return EXIT_SUCCESS;
     }
-    SocketMachine machine(argc == 1 ? new WebSocket() : new WebSocket(argv[1], argv[2]));
+    SocketMachine machine(new WebSocket());
     machine.execute();
     return EXIT_SUCCESS;
 }

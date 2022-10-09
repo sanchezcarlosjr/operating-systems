@@ -5,6 +5,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tic Tac Toe</title>
+    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700,900" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Finger+Paint&display=swap" rel="stylesheet">
+<!-- https://github.com/trohalska/Tic-tac-toe -->
     <style>
         body {
             font-family: "Lato", sans-serif;
@@ -62,17 +65,7 @@
         }
         #restart {
             flex: 1;
-        }
-
-        #player1,
-        #player2 {
-            box-sizing: border-box;
-            background: #d0bdf4;
-            border-radius: 4px;
-            padding: 10px 0;
-            margin: 0 0 10px 0;
-        }
-
+        } 
         #titleTurns {
             font-size: 0.8em;
         }
@@ -87,15 +80,15 @@
 <main>
     <section id="field">
         <div id="container">
-            <div id="0" class="cell"></div>
-            <div id="1" class="cell"></div>
-            <div id="2" class="cell"></div>
-            <div id="3" class="cell"></div>
-            <div id="4" class="cell"></div>
-            <div id="5" class="cell"></div>
-            <div id="6" class="cell"></div>
-            <div id="7" class="cell"></div>
-            <div id="8" class="cell"></div>
+            <div id="row=0&column=0" class="cell"></div>
+            <div id="row=0&column=1" class="cell"></div>
+            <div id="row=0&column=2" class="cell"></div>
+            <div id="row=1&column=0" class="cell"></div>
+            <div id="row=1&column=1" class="cell"></div>
+            <div id="row=1&column=2" class="cell"></div>
+            <div id="row=2&column=0" class="cell"></div>
+            <div id="row=2&column=1" class="cell"></div>
+            <div id="row=2&column=2" class="cell"></div>
         </div>
     </section>
     <section id="sidebar">
@@ -107,5 +100,15 @@
         <button id="restart">Play again</button>
     </section>
 </main>
+<script>
+	const SYMBOL = "X";
+	for(const element of document.getElementsByClassName("cell")) {
+			element.addEventListener('click', async (event) => {
+					const x = await fetch(`/?${element.id}`);
+					event.target.innerHTML = SYMBOL;
+					console.log(x);
+			});
+	}
+</script>
 </body>
 </html>
