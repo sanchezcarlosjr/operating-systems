@@ -76,7 +76,8 @@ body {
 		</style>
 	</head>
 	<body>
-		<h1 id="title">Tic tac toe</h1>
+		<h1 id="title">Tic tac toe by Carlos Eduardo Sanchez Torres</h1>
+		<p>Template by https://github.com/trohalska/Tic-tac-toe</p>
 		<main>
 			<section id="field">
 				<div id="container">
@@ -96,19 +97,54 @@ body {
 					<p id="titleTurns">Number of turns</p>
 					<p id="numberTurns">0</p>
 				</div>
-				<h2 id="status"></h2>
+				<h2 id="status">Connecting to server</h2>
 				<button id="restart">Play again</button>
 			</section>
 		</main>
 		<script>
+			let state = "0";
+			let symbol = "";
+			let uuid = "";
+			const machine = {
+				"0": "Connecting to server",
+				"1": "Waiting an opponent",
+			        "2": "Move",
+			        "3": "Wait",
+			        "4": "Win!",
+			        "5": "Tie",
+			        "6": "Lose!",
+				"7": "Setting...",
+				"8": "Closing connection"
+			};
+			function newState(newState) {
+			     state = newState;
+			     document.getElementById("status").innerHTML = machine[newState];
+			}
 			const protocol = document.location.protocol == "https:" ? "wss" : "ws";
 			const socket = new WebSocket(`${protocol}://${document.location.host}`);
-			socket.onopen = (event) => {
-							socket.send("Here's some text that the server is urgently awaiting!");
-						};
+			socket.onopen = (event) => newState("1");
+			socket.onmessage = (event) => {
+							const message = JSON.parse(event.data);
+							newState(message.state);
+							if (message.state === "7") {
+								symbol = message.symbol;
+								uuid = message.uuid;
+							}
+							if (message.state === "2" && message.id !== "") {
+								document.getElementById(message.id).innerHTML = message.symbol;
+							}
+						}
+			socket.onclose = (event) => {
+				newState("8");
+			};
 			for(const element of document.getElementsByClassName("cell")) {
 							element.addEventListener('click', async (event) => {
-											event.target.innerHTML = "X";
+											if (state !== "2" || event.target.innerHTML !== "") {
+											     return;
+											}
+											event.target.innerHTML = symbol;
+											socket.send(JSON.stringify({state, id: element.id, symbol, uuid}));
+											newState("3");
 										});
 						}
 		</script>
