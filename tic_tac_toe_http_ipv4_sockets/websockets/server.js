@@ -1,6 +1,6 @@
 const express = require('express');
 const ws = require('ws');
-
+const path = require('path');
 const app = express();
 
 app.get('/', function(req, res) {
@@ -8,11 +8,15 @@ app.get('/', function(req, res) {
 });
 
 const wsServer = new ws.Server({ noServer: true });
+
 wsServer.on('connection', socket => {
+  console.log("CONNECTION");
   socket.on('message', message => console.log(message));
 });
 
-const server = app.listen(3000);
+
+const server = app.listen(process.env.port || 3000);
+
 server.on('upgrade', (request, socket, head) => {
   wsServer.handleUpgrade(request, socket, head, socket => {
     wsServer.emit('connection', socket, request);
