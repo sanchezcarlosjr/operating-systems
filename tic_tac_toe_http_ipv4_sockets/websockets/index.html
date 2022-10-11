@@ -130,20 +130,31 @@ body {
 								symbol = message.symbol;
 								uuid = message.uuid;
 							}
-							if (message.state === "2" && message.id !== "") {
-								document.getElementById(message.id).innerHTML = message.symbol;
+							if (message.state === "2" && message.row >= 0 && message.column >= 0) {
+								document.getElementById(`row=${message.row}&column=${message.column}`).innerHTML = message.symbol;
 							}
 						}
 			socket.onclose = (event) => {
 				newState("8");
 			};
+
+			function captureRowAndColumn(id) {
+							const regex_row_column = /row=([0-8])&column=([0-8])/;
+							const matches = id.match(regex_row_column);
+							return {
+								row: parseInt(matches[1]),
+								column: parseInt(matches[2])
+							};
+						} 
 			for(const element of document.getElementsByClassName("cell")) {
+						        const position = captureRowAndColumn(element.id);
 							element.addEventListener('click', async (event) => {
 											if (state !== "2" || event.target.innerHTML !== "") {
 											     return;
 											}
 											event.target.innerHTML = symbol;
-											socket.send(JSON.stringify({state, id: element.id, symbol, uuid}));
+											console.log(position);
+											socket.send(JSON.stringify({state, symbol, uuid, ...position}));
 											newState("3");
 										});
 						}

@@ -3,6 +3,9 @@ const ws = require('ws');
 const path = require('path');
 const app = express();
 const { randomUUID } = require('crypto');
+const svmq = require('svmq');
+const { exec } = require('child_process');
+
 
 app.get('/', function(req, res) {
   res.sendFile(path.join(__dirname, '/index.html'));
@@ -10,36 +13,56 @@ app.get('/', function(req, res) {
 
 const wsServer = new ws.Server({ noServer: true });
 
+const database = {
+	"games": [],
+	"players": {count: 0}
+};
+
+const msgkey = 31337;
+const queue = svmq.open(msgkey);
+function pullNewMessages() {
+	queue.pop({type: 2}, (err, data) => {
+		if (err) throw err;
+		const player = JSON.parse(data);
+		console.log(player);
+		database["players"][player.uuid].send(JSON.stringify(player));
+		setImmediate(pullNewMessages);
+	});
+}
+
+
 class GameController {
-	constructor() {
-		this.game = new Map();
-		this.players = 0;
-		this.lastGame = "";
-	}
 	save(socket) {
-		this.players++;
-		if(this.players % 2 == 0) {
-			this.game.get(this.lastGame).push(socket);
-			this.game.get(this.lastGame)[0].send(JSON.stringify({state: "7", uuid: "0", symbol: "X"}));
-			this.game.get(this.lastGame)[1].send(JSON.stringify({state: "7", uuid: "1", symbol: "O"}));
-			this.game.get(this.lastGame)[0].send(JSON.stringify({state: "2", id: "", symbol: ""}));
-			this.game.get(this.lastGame)[1].send(JSON.stringify({state: "3"}));
-			this.game.get(this.lastGame).forEach(socket => {
-				socket.on('message', (message) => {
-					const player = JSON.parse(message);
-					if(player.state !== "2") {
-						return;
-					}
-					const uuid = parseInt(player.uuid);
-					this.game.get(this.lastGame)[1-uuid].send(JSON.stringify({state: "2", id: player.id, symbol: player.symbol}));
-					this.game.get(this.lastGame)[uuid].send(JSON.stringify({state: "3"}));
-				});
-			});
-		} else {
-			this.lastGame = randomUUID();
-			this.game.set(this.lastGame, [socket]);
-			socket.send(JSON.stringify({state: "1"}));
+		const player = randomUUID();
+		database["players"][player] = socket;
+		const game = Math.floor(database["players"]["count"]/2);
+		if (game == database["games"].length) {
+			database["games"].push([]);
 		}
+		database["games"][game].push(player);
+		database["players"]["count"]++;
+		socket.on('message', (message) => {
+			const player = JSON.parse(message);
+			console.log(player);
+			if(player.state !== "2") {
+				return;
+			}
+			queue.push(JSON.stringify(player), { type: 3 });
+		});
+		if (database["players"]["count"]%2===1) {
+			return;
+		}
+		exec(`./tictactoe.out X ${msgkey} ${database["games"][game][0]} O ${msgkey} ${database["games"][game][1]}`, (error, stdout, stderr) => {
+			if (error) {
+				console.error(`error: ${error.message}`);
+				return;
+			}
+			if (stderr) {
+				console.error(`stderr: ${stderr}`);
+				return;
+			}
+			console.log(`stdout:\n${stdout}`);
+		});	
 	}
 }
 const gameController = new GameController();
@@ -56,3 +79,5 @@ server.on('upgrade', (request, socket, head) => {
     wsServer.emit('connection', socket, request);
   });
 });
+
+pullNewMessages();

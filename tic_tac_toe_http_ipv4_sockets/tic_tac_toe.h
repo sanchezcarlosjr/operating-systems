@@ -5,8 +5,8 @@
 #include <sstream>
 
 struct Coordinate {
-	int row;
-	int column;
+	int row=-1;
+	int column=-1;
 	char symbol;
 };
 
@@ -20,18 +20,87 @@ class Player {
 	public:
 		explicit Player(char symbol=' ') {
 			coordinate.symbol=symbol;
-		}
-		virtual void win() = 0;
-		virtual void tie() = 0;
-		virtual bool askIfContinueMatch() = 0;
+		}	
 		void save() {
 			board |= BOARD[coordinate.row][coordinate.column];
 		}
 		[[nodiscard]] bool isWinning() const {
 			return (board & (board >> 1) & (board << 1)) != 0;
 		}
-		virtual Coordinate move() = 0; 
+		void start() {}
+		void lose() {}
+		virtual void win() = 0;
+		virtual void tie() = 0;
+		virtual bool askIfContinueMatch() = 0;
+		virtual Coordinate move() {
+			return coordinate;
+		}
+		virtual Coordinate move(Coordinate previousCoordinate) {
+			return coordinate;
+		}
+};
 
+#include <sys/msg.h>
+#include <nlohmann/json.hpp>
+#include <unistd.h>
+
+struct Message {
+	long type;
+	char text[300];
+} message;
+
+
+class MessageQueuePlayer: public Player {
+private:
+	int msgid = -1;
+	int turn = 0;
+	std::string uuid;
+public:
+	MessageQueuePlayer(char symbol, int key, std::string uuid, int turn): Player(symbol), uuid(uuid), turn(turn) {
+		msgid = msgget(key, 0666 | IPC_CREAT);
+		if(msgid < 0) {
+			std::cout << "[ERROR] msgid is not available" << std::endl;
+			exit(-1);
+		}
+		sendState("7", coordinate);
+		if(turn == 1) {
+			sendState("3");
+		}
+	}
+	void sendState(std::string state, Coordinate previousCoordinate={.row=-1,.column=-1}) {
+		nlohmann::json j2;
+		j2["state"] = state;
+		j2["uuid"] = uuid;
+		j2["symbol"] = std::string(1, previousCoordinate.symbol);
+		j2["row"] = previousCoordinate.row;
+		j2["column"] = previousCoordinate.column;
+		std::string sjson = j2.dump();
+		message.type = 2;
+		strcpy(message.text, sjson.c_str());
+		msgsnd(msgid, &message, sjson.size(), 0);
+	}
+	virtual void win() {
+		sendState("4");
+	}
+	virtual void lose() {
+		sendState("6");
+	}
+	virtual void tie() {
+		sendState("5");
+	}
+	virtual bool askIfContinueMatch() {
+		return false;
+	}
+	virtual Coordinate move(Coordinate previousCoordinate) {	
+		sendState("2", previousCoordinate);
+		auto msg = Message();
+		msgrcv(msgid, &msg, sizeof(msg), 3, 0);
+		nlohmann::json j2 =  nlohmann::json::parse(msg.text);
+		coordinate.row = j2["row"];
+		coordinate.column = j2["column"];
+		sendState("3", coordinate);
+		return coordinate;
+	}
 };
 
 class LocalConsolePlayer: public Player {
@@ -101,6 +170,7 @@ class PassiveConsolePlayer: public LocalConsolePlayer {
 class ConsoleBoard {
 	private:
 		char board[3][3];
+		Coordinate coordinate;
 	public:
 		void reset() {
 			for(auto & row : board)
@@ -108,7 +178,7 @@ class ConsoleBoard {
 					column = EMPTY_COORDINATE;
 		}
 		int save(Player* player) {
-			Coordinate coordinate = player->move();
+			coordinate = player->move(coordinate);
 			if (0 > coordinate.row || 0 > coordinate.column  || coordinate.row+coordinate.column > 4  || board[coordinate.row][coordinate.column] != EMPTY_COORDINATE)
 				return ERROR;
 			player->save();
@@ -123,6 +193,7 @@ class ConsoleBoard {
 					std::cout<< row[column] << (column < 2 ? '|': EMPTY_COORDINATE);
 				std::cout << std::endl << "-----" << std::endl;
 			}
+			std::cout << std::endl;
 		}
 		int size() {
 			return 9;
@@ -132,8 +203,11 @@ class ConsoleBoard {
 #define RESET 0 
 #define NEXT_TURN 1
 #define TRY_AGAIN 2
+#define NEW_PLAYER 3
+#define MAX_PLAYER 4
 #define NEW_GAME 5
 #define DONE 6
+#define NO_PLAYER 7
 
 #define PLAYERS 2
 
@@ -145,7 +219,11 @@ class Game {
 		Player* currentPlayer() {
 			return players[turn%PLAYERS];
 		}
+		
 		int transit(int state) {
+			if(players.size() != 2) {
+				exit(-1);
+			}
 			if(state == NEW_GAME) {
 				return currentPlayer()->askIfContinueMatch() ? RESET : DONE;
 			}
@@ -161,6 +239,8 @@ class Game {
 			board->draw();
 			if(result == WIN) {
 				currentPlayer()->win();
+				turn++;
+				currentPlayer()->lose();
 				return NEW_GAME;
 			}
 			bool isTie = ++turn == board->size();
