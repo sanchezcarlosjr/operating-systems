@@ -8,76 +8,11 @@
 		<link href="https://fonts.googleapis.com/css?family=Lato:300,400,700,900" rel="stylesheet" />
 		<link href="https://fonts.googleapis.com/css2?family=Finger+Paint&display=swap" rel="stylesheet">
 		<!-- https://github.com/trohalska/Tic-tac-toe -->
-		<style>
-body {
-	font-family: "Lato", sans-serif;
-	text-align: center;
-}
-
-	main {
-		display: flex;
-		justify-content: center;
-	}
-
-	section {
-		text-align: center;
-		padding: 30px;
-		background: #e5eaf5c0;
-	}
-
-	#field {
-		padding: 30px;
-	}
-
-	#container {
-		display: grid;
-		grid-template-columns: repeat(3, auto);
-		width: 306px;
-		margin: auto;
-	}
-	.cell {
-		font-family: "Finger Paint", sans-serif;
-		color: #232d55;
-		width: 100px;
-		height: 100px;
-		box-shadow: 0 0 0 1px #6e92a3;
-		border: 1px solid #6e92a3;
-		cursor: pointer;
-		line-height: 100px;
-		font-size: 60px;
-		background: #a0d2ebc0;
-	}
-
-	#sidebar {
-		width: 125px;
-		display: flex;
-		flex-direction: column;
-		justify-content: space-between;
-	}
-	#player {
-		flex: 1;
-	}
-	#turns {
-		flex: 1;
-	}
-	#status {
-		flex: 4;
-	}
-	#restart {
-		flex: 1;
-	} 
-	#titleTurns {
-		font-size: 0.8em;
-	}
-	#numberTurns {
-		font-size: 1.4em;
-		margin: 0;
-	}
-		</style>
+		<link rel="stylesheet" href="style.css">
 	</head>
 	<body>
 		<h1 id="title">Tic tac toe by Carlos Eduardo Sanchez Torres</h1>
-		<p>Template by https://github.com/trohalska/Tic-tac-toe</p>
+		<p>Code on <a href="https://github.com/sanchezcarlosjr/operating-systems/tree/main/tic_tac_toe_http_ipv4_sockets">Tic Tac Toe WebSockets Code</a>. Template by https://github.com/trohalska/Tic-tac-toe</p>
 		<main>
 			<section id="field">
 				<div id="container">
@@ -98,28 +33,33 @@ body {
 					<p id="numberTurns">0</p>
 				</div>
 				<h2 id="status">Connecting to server</h2>
-				<button id="restart">Play again</button>
 			</section>
 		</main>
 		<script>
+			const movementAudio = new Audio("Swoosh_3_SoundBible-com_1573211927.mp3");
+			const winningAudio = new Audio("Auditorium_Applause_SoundBible_com_280911206.mp3");
+
 			let state = "0";
 			let symbol = "";
 			let uuid = "";
 			const machine = {
-				"0": "Connecting to server",
-				"1": "Waiting an opponent",
-			        "2": "Move",
-			        "3": "Wait",
-			        "4": "Win!",
-			        "5": "Tie",
-			        "6": "Lose!",
-				"7": "Setting...",
-				"8": "Closing connection"
-			};
+							"0": "Connecting to server",
+							"1": "Waiting an opponent",
+							"2": "Move",
+							"3": "Wait",
+							"4": "Win!",
+							"5": "Tie",
+							"6": "Lose!",
+							"7": "Setting...",
+							"8": "Closing connection"
+						};
 			function newState(newState) {
-			     state = newState;
-			     document.getElementById("status").innerHTML = machine[newState];
-			}
+							state = newState;
+							document.getElementById("status").innerHTML = machine[newState];
+							if (state === "4") {
+								winningAudio.play();
+							}
+						}
 			const protocol = document.location.protocol == "https:" ? "wss" : "ws";
 			const socket = new WebSocket(`${protocol}://${document.location.host}`);
 			socket.onopen = (event) => newState("1");
@@ -127,31 +67,33 @@ body {
 							const message = JSON.parse(event.data);
 							newState(message.state);
 							if (message.state === "7") {
-								symbol = message.symbol;
-								uuid = message.uuid;
-							}
-							if (message.state === "2" && message.row >= 0 && message.column >= 0) {
-								document.getElementById(`row=${message.row}&column=${message.column}`).innerHTML = message.symbol;
-							}
+											symbol = message.symbol;
+											uuid = message.uuid;
+										}	
+							if (message.row >= 0 && message.column >= 0) {
+											document.getElementById(`row=${message.row}&column=${message.column}`).innerHTML = message.symbol;
+											document.getElementById("numberTurns").innerHTML++;
+											movementAudio.play();
+										}
 						}
 			socket.onclose = (event) => {
-				newState("8");
-			};
+							newState("8");
+						};
 
 			function captureRowAndColumn(id) {
 							const regex_row_column = /row=([0-8])&column=([0-8])/;
 							const matches = id.match(regex_row_column);
 							return {
-								row: parseInt(matches[1]),
-								column: parseInt(matches[2])
-							};
+											row: parseInt(matches[1]),
+											column: parseInt(matches[2])
+										};
 						} 
 			for(const element of document.getElementsByClassName("cell")) {
-						        const position = captureRowAndColumn(element.id);
+							const position = captureRowAndColumn(element.id);
 							element.addEventListener('click', async (event) => {
 											if (state !== "2" || event.target.innerHTML !== "") {
-											     return;
-											}
+															return;
+														}
 											event.target.innerHTML = symbol;
 											console.log(position);
 											socket.send(JSON.stringify({state, symbol, uuid, ...position}));

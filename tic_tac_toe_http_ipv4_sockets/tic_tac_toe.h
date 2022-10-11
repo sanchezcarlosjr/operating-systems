@@ -28,9 +28,15 @@ class Player {
 			return (board & (board >> 1) & (board << 1)) != 0;
 		}
 		void start() {}
-		void lose() {}
-		virtual void win() = 0;
-		virtual void tie() = 0;
+		virtual void lose() {}
+		virtual void lose(Coordinate coordinate) {}
+		virtual Coordinate win() = 0;
+		virtual Coordinate tie() {
+			return coordinate;
+		}
+		virtual Coordinate tie(Coordinate coordinate) {
+			return coordinate;
+		};
 		virtual bool askIfContinueMatch() = 0;
 		virtual Coordinate move() {
 			return coordinate;
@@ -79,19 +85,21 @@ public:
 		strcpy(message.text, sjson.c_str());
 		msgsnd(msgid, &message, sjson.size(), 0);
 	}
-	virtual void win() {
+	Coordinate win() override {
 		sendState("4");
+		return coordinate;
 	}
-	virtual void lose() {
-		sendState("6");
+	void lose(Coordinate previousCoordinate) override {
+		sendState("6", previousCoordinate);
 	}
-	virtual void tie() {
+	Coordinate tie() override {
 		sendState("5");
+		return coordinate;
 	}
-	virtual bool askIfContinueMatch() {
+	bool askIfContinueMatch() override {
 		return false;
 	}
-	virtual Coordinate move(Coordinate previousCoordinate) {	
+	Coordinate move(Coordinate previousCoordinate) override {	
 		sendState("2", previousCoordinate);
 		auto msg = Message();
 		msgrcv(msgid, &msg, sizeof(msg), 3, 0);
@@ -106,11 +114,13 @@ public:
 class LocalConsolePlayer: public Player {
 	public:	
 		explicit LocalConsolePlayer(char symbol): Player(symbol) {}
-		void win() override {
+		Coordinate win() override {
 			std::cout << std::endl << "You've won";
+			return coordinate;
 		}
-		void tie() override {
+		Coordinate tie() override {
 			std::cout << std::endl << "You tied";
+			return coordinate;
 		}
 		bool askIfContinueMatch() override {
 			std::cout << std::endl << "Do you want continue? (y/n) ";
@@ -123,6 +133,7 @@ class LocalConsolePlayer: public Player {
 			std::cin >> coordinate.row >> coordinate.column;
 			return coordinate;
 		}
+		void lose() override {}
 };
 
 class ActiveConsolePlayer: public LocalConsolePlayer {
@@ -139,6 +150,7 @@ class ActiveConsolePlayer: public LocalConsolePlayer {
 			notification->sendMessage(ss.str());
 			return coordinate;
 		}
+		void lose() override {}
 };
 
 
@@ -147,8 +159,9 @@ class PassiveConsolePlayer: public LocalConsolePlayer {
 		Notification* notification;
 	public:	
 		PassiveConsolePlayer(char symbol, Notification* notification): LocalConsolePlayer(symbol), notification(notification) {}
-		void win() override {
+		Coordinate win() override {
 			std::cout << "You've lost!" <<std::endl;
+			return coordinate;
 		}
 		Coordinate move() override {
 			std::cout << "Wait your turn!" << std::endl << std::endl;
@@ -156,6 +169,7 @@ class PassiveConsolePlayer: public LocalConsolePlayer {
 			ss >> coordinate.row >> coordinate.column;
 			return coordinate;
 		}
+		void lose() override {}
 };
 
 #define EMPTY_COORDINATE ' '
@@ -238,14 +252,16 @@ class Game {
 				return TRY_AGAIN;
 			board->draw();
 			if(result == WIN) {
-				currentPlayer()->win();
+				Coordinate coordinate = currentPlayer()->win();
 				turn++;
-				currentPlayer()->lose();
+				currentPlayer()->lose(coordinate);
 				return NEW_GAME;
 			}
 			bool isTie = ++turn == board->size();
 			if (isTie) {
-				currentPlayer()->tie();
+				Coordinate coordinate = currentPlayer()->tie();
+				turn++;	
+				currentPlayer()->tie(coordinate);
 				return NEW_GAME;
 			}
 			return NEXT_TURN;

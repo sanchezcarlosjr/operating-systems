@@ -11,6 +11,8 @@ app.get('/', function(req, res) {
   res.sendFile(path.join(__dirname, '/index.html'));
 });
 
+app.use(express.static(path.join(__dirname, 'public'))); 
+
 const wsServer = new ws.Server({ noServer: true });
 
 const database = {
@@ -61,7 +63,7 @@ class GameController {
 				console.error(`stderr: ${stderr}`);
 				return;
 			}
-			console.log(`stdout:\n${stdout}`);
+			console.log(`DONE!`);
 		});	
 	}
 }
