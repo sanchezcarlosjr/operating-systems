@@ -54,7 +54,7 @@ class GameController {
 		if (database["players"]["count"]%2===1) {
 			return;
 		}
-		exec(`./tictactoe.out X ${msgkey} ${database["games"][game][0]} O ${msgkey} ${database["games"][game][1]}`, (error, stdout, stderr) => {
+		exec(`${path.join(__dirname, '/tictactoe.out')} X ${msgkey} ${database["games"][game][0]} O ${msgkey} ${database["games"][game][1]}`, (error, stdout, stderr) => {
 			if (error) {
 				console.error(`error: ${error.message}`);
 				return;
