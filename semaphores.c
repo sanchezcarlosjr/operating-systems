@@ -20,7 +20,7 @@ $ gcc -o semaphores.out semaphores.c -lpthread
 #include <sys/wait.h>
 #include <string.h>
 
-#define SEMAPHORES 1
+#define SEMAPHORES 0
 
 int main()
 {
