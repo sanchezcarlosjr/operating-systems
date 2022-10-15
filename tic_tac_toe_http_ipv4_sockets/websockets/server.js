@@ -28,12 +28,10 @@ class QueueSvmq {
 	pull() {
 		this.queue.pop({type: 2}, (err, data) => {
 			if (err) {
-				console.log(err);
 				this.queue.close();
 				return;
 			}
 			const player = JSON.parse(data);
-			console.log(player);
 			database["players"][player.uuid].send(JSON.stringify(player));
 			setImmediate(this.pull.bind(this));
 		});
@@ -57,7 +55,6 @@ class GameController {
 		socket.send(JSON.stringify({"state": "12", uuid: player}));
 		socket.on('message', (message) => {
 			const response = JSON.parse(message);
-			console.log(response);
 			if(response.state === "1") {
 				const game = randomUUID();
 				database["games"][game] = {};
@@ -87,7 +84,6 @@ class GameController {
 						console.error(`stderr: ${stderr}`);
 						return;
 					}
-					console.log(`DONE!`);
 				});
 				this.msgkey++;
 				return;
