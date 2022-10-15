@@ -113,7 +113,9 @@ class GameController {
 				delete database["players_games"][opponent];
 				database["players"]["count"]--;
 			}
-			database["games"][game]["queue"].close();
+			if (database["games"][game]["queue"]) {
+				database["games"][game]["queue"].close();
+			}
 			delete database["games"][game];
 		});
 	}
