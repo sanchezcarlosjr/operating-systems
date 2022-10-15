@@ -96,7 +96,7 @@
 						newState("1");
 						socket.send(JSON.stringify({"state": "1", uuid}));
 					}
-				}
+				}	
 				if (message.row >= 0 && message.column >= 0) {
 					document.getElementById(`row=${message.row}&column=${message.column}`).innerHTML = message.symbol;
 					document.getElementById("numberTurns").innerHTML++;

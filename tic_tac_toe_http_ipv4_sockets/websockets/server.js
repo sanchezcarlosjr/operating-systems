@@ -21,20 +21,35 @@ const database = {
 	"players_games": {}
 };
 
-const msgkey = 31337;
-const queue = svmq.open(msgkey);
-function pullNewMessages() {
-	queue.pop({type: 2}, (err, data) => {
-		if (err) throw err;
-		const player = JSON.parse(data);
-		console.log(player);
-		database["players"][player.uuid].send(JSON.stringify(player));
-		setImmediate(pullNewMessages);
-	});
+class QueueSvmq {
+	constructor(msgkey) {
+		this.queue = svmq.open(msgkey);
+	}
+	pull() {
+		this.queue.pop({type: 2}, (err, data) => {
+			if (err) {
+				console.log(err);
+				this.queue.close();
+				return;
+			}
+			const player = JSON.parse(data);
+			console.log(player);
+			database["players"][player.uuid].send(JSON.stringify(player));
+			setImmediate(this.pull.bind(this));
+		});
+	}
+	close() {
+		this.queue.close();
+	}
+	push(data) {
+		this.queue.push(data, {type: 3});
+	}
 }
 
-
 class GameController {
+	constructor() {
+		this.msgkey = 31337;
+	}
 	save(socket) {
 		const player = randomUUID();
 		database["players"][player] = socket;
@@ -45,7 +60,8 @@ class GameController {
 			console.log(response);
 			if(response.state === "1") {
 				const game = randomUUID();
-				database["games"][game] = [player];
+				database["games"][game] = {};
+				database["games"][game]["players"] = [player];
 				database["players_games"][response.uuid] = game;
 				socket.send(JSON.stringify({state: "10", game}));
 				return;
@@ -55,9 +71,14 @@ class GameController {
 				return;
 			}
 			if(response.state === "9") {
-				database["games"][response.game].push(response.uuid);
+				const queue = new QueueSvmq(this.msgkey);
+				database["games"][response.game]["queue"] = queue;
+				queue.pull();
+				database["games"][response.game]["players"].push(response.uuid);
+				const playerA = database["games"][response.game]["players"][0];
+				const playerB = database["games"][response.game]["players"][1];
 				database["players_games"][response.uuid] = response.game;
-				exec(`${path.join(__dirname, '/tictactoe.out')} X ${msgkey} ${database["games"][response.game][0]} O ${msgkey} ${database["games"][response.game][1]}`, (error, stdout, stderr) => {
+				exec(`${path.join(__dirname, '/tictactoe.out')} X ${this.msgkey} ${playerA} O ${this.msgkey} ${playerB}`, (error, stdout, stderr) => {
 					if (error) {
 						console.error(`error: ${error.message}`);
 						return;
@@ -67,14 +88,15 @@ class GameController {
 						return;
 					}
 					console.log(`DONE!`);
-				});	
-				console.log("NEW GAME");
+				});
+				this.msgkey++;
 				return;
 			}
 			if(response.state !== "2") {
 				return;
 			}
-			queue.push(JSON.stringify(response), { type: 3 });
+			const game = database["players_games"][response.uuid];
+			database["games"][game]["queue"].push(JSON.stringify(response));
 		});
 		socket.on('close', () => {
 			const game = database["players_games"][player];
@@ -85,13 +107,17 @@ class GameController {
 			}
 			delete database["players_games"][player];
 			delete database["players"][player];
-			const opponent = database["games"][game].filter(uuid => uuid !== player)[0];
+			if (!database["games"][game]) {
+				return;
+			}
+			const opponent = database["games"][game]["players"].filter(uuid => uuid !== player)[0];
 			if (database["players"][opponent]) {
 				database["players"][opponent].close();
 				delete database["players"][opponent];
 				delete database["players_games"][opponent];
 				database["players"]["count"]--;
 			}
+			database["games"][game]["queue"].close();
 			delete database["games"][game];
 		});
 	}
@@ -111,4 +137,3 @@ server.on('upgrade', (request, socket, head) => {
   });
 });
 
-pullNewMessages();
