@@ -16,8 +16,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 const wsServer = new ws.Server({ noServer: true });
 
 const database = {
-	"games": [],
-	"players": {count: 0}
+	"games": {},
+	"players": {count: 0},
+	"players_games": {}
 };
 
 const msgkey = 31337;
@@ -37,34 +38,62 @@ class GameController {
 	save(socket) {
 		const player = randomUUID();
 		database["players"][player] = socket;
-		const game = Math.floor(database["players"]["count"]/2);
-		if (game == database["games"].length) {
-			database["games"].push([]);
-		}
-		database["games"][game].push(player);
 		database["players"]["count"]++;
+		socket.send(JSON.stringify({"state": "12", uuid: player}));
 		socket.on('message', (message) => {
-			const player = JSON.parse(message);
-			console.log(player);
-			if(player.state !== "2") {
+			const response = JSON.parse(message);
+			console.log(response);
+			if(response.state === "1") {
+				const game = randomUUID();
+				database["games"][game] = [player];
+				database["players_games"][response.uuid] = game;
+				socket.send(JSON.stringify({state: "10", game}));
 				return;
 			}
-			queue.push(JSON.stringify(player), { type: 3 });
+			if(!!response.game && !database["games"][response.game]) {
+				socket.send(JSON.stringify({state: "11"}));
+				return;
+			}
+			if(response.state === "9") {
+				database["games"][response.game].push(response.uuid);
+				database["players_games"][response.uuid] = response.game;
+				exec(`${path.join(__dirname, '/tictactoe.out')} X ${msgkey} ${database["games"][response.game][0]} O ${msgkey} ${database["games"][response.game][1]}`, (error, stdout, stderr) => {
+					if (error) {
+						console.error(`error: ${error.message}`);
+						return;
+					}
+					if (stderr) {
+						console.error(`stderr: ${stderr}`);
+						return;
+					}
+					console.log(`DONE!`);
+				});	
+				console.log("NEW GAME");
+				return;
+			}
+			if(response.state !== "2") {
+				return;
+			}
+			queue.push(JSON.stringify(response), { type: 3 });
 		});
-		if (database["players"]["count"]%2===1) {
-			return;
-		}
-		exec(`${path.join(__dirname, '/tictactoe.out')} X ${msgkey} ${database["games"][game][0]} O ${msgkey} ${database["games"][game][1]}`, (error, stdout, stderr) => {
-			if (error) {
-				console.error(`error: ${error.message}`);
+		socket.on('close', () => {
+			const game = database["players_games"][player];
+			database["players"]["count"]--;
+			if (!game) {
+				delete database["players"][player];
 				return;
 			}
-			if (stderr) {
-				console.error(`stderr: ${stderr}`);
-				return;
+			delete database["players_games"][player];
+			delete database["players"][player];
+			const opponent = database["games"][game].filter(uuid => uuid !== player)[0];
+			if (database["players"][opponent]) {
+				database["players"][opponent].close();
+				delete database["players"][opponent];
+				delete database["players_games"][opponent];
+				database["players"]["count"]--;
 			}
-			console.log(`DONE!`);
-		});	
+			delete database["games"][game];
+		});
 	}
 }
 const gameController = new GameController();

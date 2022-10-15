@@ -42,16 +42,21 @@
 			let state = "0";
 			let symbol = "";
 			let uuid = "";
+			let game = "";
 			const machine = {
 							"0": "Connecting to server",
-							"1": "Waiting an opponent",
+							"1": "Assigning a game",
 							"2": "Move",
 							"3": "Wait",
 							"4": "Win!",
 							"5": "Tie",
 							"6": "Lose!",
 							"7": "Setting...",
-							"8": "Closing connection"
+							"8": "Closing connection",
+				                        "9": "Matching to game...",
+				                        "10": "Waiting a opponent! Copy URL and share it.",
+				                        "11": "Your game is dead. Making a new game...",
+				                        "12": "Setting..."
 						};
 			function newState(newState) {
 							state = newState;
@@ -62,23 +67,45 @@
 						}
 			const protocol = document.location.protocol == "https:" ? "wss" : "ws";
 			const socket = new WebSocket(`${protocol}://${document.location.host}`);
-			socket.onopen = (event) => newState("1");
+			socket.onopen = (event) => {}
 			socket.onmessage = (event) => {
-							const message = JSON.parse(event.data);
-							newState(message.state);
-							if (message.state === "7") {
-											symbol = message.symbol;
-											uuid = message.uuid;
-										}	
-							if (message.row >= 0 && message.column >= 0) {
-											document.getElementById(`row=${message.row}&column=${message.column}`).innerHTML = message.symbol;
-											document.getElementById("numberTurns").innerHTML++;
-											movementAudio.play();
-										}
-						}
+				const message = JSON.parse(event.data);
+				console.log(message);
+				newState(message.state);
+				if (message.state === "10") {
+					game = message.game;
+					const url = new URL(window.location);
+					url.searchParams.set('game', game);
+					window.history.pushState({}, '', url);
+				}
+				if (message.state === "7") {
+					symbol = message.symbol;
+				}
+				if (message.state === "11") {
+					newState("1");
+					socket.send(JSON.stringify({"state": "1", uuid}));
+				}
+				if(message.state === "12") {
+					uuid = message.uuid;
+					const params = new URLSearchParams(document.location.search);
+					if (params.has('game')) {
+						game = params.get("game");
+						newState("9");
+						socket.send(JSON.stringify({"state": "9", "game": game, uuid}));
+					} else {
+						newState("1");
+						socket.send(JSON.stringify({"state": "1", uuid}));
+					}
+				}
+				if (message.row >= 0 && message.column >= 0) {
+					document.getElementById(`row=${message.row}&column=${message.column}`).innerHTML = message.symbol;
+					document.getElementById("numberTurns").innerHTML++;
+					movementAudio.play();
+				}
+			}
 			socket.onclose = (event) => {
-							newState("8");
-						};
+				newState("8");
+			};
 
 			function captureRowAndColumn(id) {
 							const regex_row_column = /row=([0-8])&column=([0-8])/;
