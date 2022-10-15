@@ -63,7 +63,7 @@ class GameController {
 				socket.send(JSON.stringify({state: "10", game}));
 				return;
 			}
-			if(!!response.game && !database["games"][response.game]) {
+			if(!!response.game && !database["games"][response.game] || database["games"][response.game]["players"].length === 2) {
 				socket.send(JSON.stringify({state: "11"}));
 				return;
 			}
