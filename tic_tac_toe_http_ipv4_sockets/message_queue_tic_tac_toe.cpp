@@ -1,13 +1,13 @@
 #include "tic_tac_toe.h"
 
 int main(int argc, char* argv[]) {
-	if (argc != 7) {
-		std::cout << "[ERROR] We expect 7 parameters: SymbolPlayer1 QueueId UUIDPlayer1 SymbolP2 QueueId UUIDP2" << std::endl;
+	if (argc != 9) {
+		std::cout << "[ERROR] We expect 9 parameters: Human|Computer SymbolPlayer1 QueueId UUIDPlayer1 Human|Computer SymbolP2 QueueId UUIDP2" << std::endl;
 		return -1;
 	}
 	Game game(new ConsoleBoard, {
-			new MessageQueuePlayer(argv[1][0], atoi(argv[2]),  std::string(argv[3]), 0), 
-			new MessageQueuePlayer(argv[4][0], atoi(argv[5]), std::string(argv[6]), 1)
+			argv[1][0] == 'H' ? (Player*) new MessageQueuePlayer(argv[2][0], atoi(argv[3]),  std::string(argv[4]), 0) : new Computer(argv[2][0]),
+			argv[5][0] == 'H' ? (Player*) new MessageQueuePlayer(argv[6][0], atoi(argv[7]), std::string(argv[8]), 1) : new Computer(argv[6][0])
 			}
 		 );
 	game.play();

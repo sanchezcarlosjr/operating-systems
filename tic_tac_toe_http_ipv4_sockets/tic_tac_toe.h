@@ -3,6 +3,8 @@
 #include "sockets/notification.h"
 #include <vector>
 #include <sstream>
+#include <unistd.h>
+#define FULL_BOARD -286331154
 
 struct Coordinate {
 	int row=-1;
@@ -13,31 +15,52 @@ struct Coordinate {
 long int BOARD[3][3] = {{0x80080080, 0x40008000, 0x20000808}, {0x08040000, 0x04004044, 0x02000400}, {0x00820002, 0x00402000, 0x00200220}};
 
 class Player {
-	private:
-		long board = 0x0;
 	protected:
+		long int board = 0x0;
 		Coordinate coordinate{};
 	public:
 		explicit Player(char symbol=' ') {
 			coordinate.symbol=symbol;
-		}	
-		void save() {
+		}
+		bool isPlayable(Player* player, Coordinate coordinate) {
+			return ((board | player->board) & BOARD[coordinate.row][coordinate.column]) == 0;
+		}
+		bool isBoardFull(Player* player) {
+			return (board | player->board) == FULL_BOARD;
+		}
+		void registerCoordinate(Coordinate coordinate) {
+			this->coordinate = coordinate;
+		}
+		long int save() {
 			board |= BOARD[coordinate.row][coordinate.column];
+			return board;
+		}
+		Player* copy() {
+			Player* player = new Player(coordinate.symbol);
+			player->board = board;
+			return player;
 		}
 		[[nodiscard]] bool isWinning() const {
+			return (board & (board >> 1) & (board << 1)) != 0;
+		}
+		[[nodiscard]] bool hasWon() const {
 			return (board & (board >> 1) & (board << 1)) != 0;
 		}
 		void start() {}
 		virtual void lose() {}
 		virtual void lose(Coordinate coordinate) {}
-		virtual Coordinate win() = 0;
+		virtual Coordinate win() {
+			return coordinate;
+		}
 		virtual Coordinate tie() {
 			return coordinate;
 		}
 		virtual Coordinate tie(Coordinate coordinate) {
 			return coordinate;
 		};
-		virtual bool askIfContinueMatch() = 0;
+		virtual bool askIfContinueMatch() {
+			return false;
+		}
 		virtual Coordinate move() {
 			return coordinate;
 		}
@@ -109,6 +132,25 @@ public:
 		sendState("3", coordinate);
 		return coordinate;
 	}
+};
+
+#include <fstream>
+class Computer: public Player {
+	private:
+		nlohmann::json data;
+		std::string state = "0";
+	public:
+		Computer(char symbol): Player(symbol) {
+			std::ifstream f("public/minimax.json");
+			data = nlohmann::json::parse(f);
+		}
+		Coordinate move(Coordinate previousCoordinate) override {
+			state = data[state][std::to_string(previousCoordinate.row*10+previousCoordinate.column)];
+			state = data[state]["best"];
+			coordinate.row = data[state]["R"]["row"];
+			coordinate.column = data[state]["R"]["column"];
+			return coordinate;
+		}
 };
 
 class LocalConsolePlayer: public Player {

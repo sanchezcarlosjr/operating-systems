@@ -33,6 +33,7 @@
 					<p id="numberTurns">0</p>
 				</div>
 				<h2 id="status">Connecting to server</h2>
+				<button style="visibility: hidden" id="play_with_computer_button" type="button" onclick="window.playWithTheComputer()">Play with the computer</button>
 			</section>
 		</main>
 		<script>
@@ -52,11 +53,12 @@
 							"5": "You tied!",
 							"6": "You lost!",
 							"7": "Setting...",
-							"8": "Closing connection",
+							"8": "Connection closed",
 				                        "9": "Matching to game...",
 				                        "10": "Waiting an opponent! Copy actual URL and share it.",
 				                        "11": "Your game is dead. Making a new game...",
-				                        "12": "Setting..."
+				                        "12": "Setting...",
+				                        "13": "Connecting to computer..."
 						};
 			function newState(newState) {
 							state = newState;
@@ -65,18 +67,26 @@
 								winningAudio.play();
 							}
 						}
+			function playWithTheComputer() {
+				newState("13");
+				socket.send(JSON.stringify({"state": "13", uuid, "game": game}));
+				document.getElementById('play_with_computer_button').style.visibility = 'hidden';
+			}
 			const protocol = document.location.protocol == "https:" ? "wss" : "ws";
 			const socket = new WebSocket(`${protocol}://${document.location.host}`);
 			socket.onopen = (event) => {}
 			socket.onmessage = (event) => {
 				const message = JSON.parse(event.data);
-				console.log(message);
 				newState(message.state);
 				if (message.state === "10") {
 					game = message.game;
 					const url = new URL(window.location);
 					url.searchParams.set('game', game);
 					window.history.pushState({}, '', url);
+					document.getElementById('play_with_computer_button').style.visibility = 'visible';
+				}
+				if (message.state !== "10") {
+					document.getElementById('play_with_computer_button').style.visibility = 'hidden';
 				}
 				if (message.state === "7") {
 					symbol = message.symbol;
