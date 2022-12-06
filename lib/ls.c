@@ -68,15 +68,12 @@ struct File from_stat_to_user_standard_file(char *filename, struct stat *info_p)
 
 void print_long_format(Files* files) {
 	for(int i=0; i<files->used; i++) {
-		printf( "%7lu " , files->array[i].inode_number );
-		printf( "%14s ", files->array[i].filename);
-		if (i%4 == 3) {
-			printf("\n");
-		}
+		printf( "%s\n" , files->array[i].filename );
 	}
 }
 
 Files do_ls( char dirname[] ) {
+	char tmp[strlen(dirname)];	
 	DIR *dir_ptr;
 	struct dirent *direntp;
 	if ( ( dir_ptr = opendir( dirname ) ) == NULL ) {
@@ -86,9 +83,10 @@ Files do_ls( char dirname[] ) {
 	Files files;
 	init_files(&files, 5);
 	while ( (direntp = readdir(dir_ptr)) != NULL ) {
-		if (strcmp(direntp->d_name,".")==0 || strcmp(direntp->d_name,"..")==0) 
-			continue;
-		insert_file(&files, dostat(direntp->d_name));
+		if (direntp->d_name[0] == '.') 
+			continue;	
+		printf("%s%s\n", dirname, direntp->d_name);
+
 	}
 	closedir(dir_ptr);	
 	return files;
